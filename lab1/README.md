@@ -5,8 +5,8 @@ This file mirrors the sections of `docs/06-lab1-step-by-step.md` and includes th
 ## Step 1 - Setup
 
 ### 1.1 Repos and branch
-- Labs repo (delivery): `C:\Users\cekur\IdeaProjects\AY-25-26-labs`
-- MZinga repo (runtime/local edits): `C:\Users\cekur\IdeaProjects\mzinga-apps`
+- Labs repo (delivery): `%USERPROFILE%\IdeaProjects\AY-25-26-labs`
+- MZinga repo (runtime/local edits): `%USERPROFILE%\IdeaProjects\mzinga-apps`
 - Delivery branch: `labs/s324924`
 
 ### 1.2 Prerequisites I used
@@ -18,7 +18,7 @@ docker --version
 ```
 
 ### 1.3 MZinga env
-File: `C:\Users\cekur\IdeaProjects\mzinga-apps\.env`
+File: `%USERPROFILE%\IdeaProjects\mzinga-apps\.env`
 
 Required lines:
 ```env
@@ -32,7 +32,7 @@ COMMUNICATIONS_EXTERNAL_WORKER=true
 I used the simplified compose file (fallback from the guide) because of the replica-set security key issue on Windows.
 
 ```powershell
-docker compose -f "C:\Users\cekur\IdeaProjects\AY-25-26-labs\docs\docker-compose-simplified.yml" --env-file "C:\Users\cekur\IdeaProjects\mzinga-apps\.env" -p mzinga-lab1 up -d database messagebus cache
+docker compose -f "%USERPROFILE%\IdeaProjects\AY-25-26-labs\docs\docker-compose-simplified.yml" --env-file "%USERPROFILE%\IdeaProjects\mzinga-apps\.env" -p mzinga-lab1 up -d database messagebus cache
 ```
 
 ### 1.5 Start MailHog
@@ -42,7 +42,7 @@ docker run -d --name lab1-mailhog -p 1025:1025 -p 8025:8025 mailhog/mailhog
 
 ### 1.6 Start MZinga
 ```powershell
-cd "C:\Users\cekur\IdeaProjects\mzinga-apps"
+cd "%USERPROFILE%\IdeaProjects\mzinga-apps"
 npm run dev
 ```
 
@@ -67,7 +67,7 @@ I inspected:
 
 I inspected MongoDB documents with:
 ```powershell
-& "C:\Users\cekur\AppData\Local\Programs\mongosh\mongosh.exe" "mongodb://admin:admin@localhost:27017/mzinga?authSource=admin&directConnection=true"
+& "%USERPROFILE%\AppData\Local\Programs\mongosh\mongosh.exe" "mongodb://admin:admin@localhost:27017/mzinga?authSource=admin&directConnection=true"
 ```
 
 Then:
@@ -106,7 +106,7 @@ Observed sample shape from my run:
 ## Step 3 - Add `status` Field
 
 Local file changed in MZinga repo:
-- `C:\Users\cekur\IdeaProjects\mzinga-apps\src\collections\Communications.ts`
+- `%USERPROFILE%\IdeaProjects\mzinga-apps\src\collections\Communications.ts`
 
 Implemented:
 - `status` select field with:
@@ -187,7 +187,7 @@ hooks: {
 ## Step 5 - Build Python Worker
 
 Worker folder (delivery artifact):
-- `C:\Users\cekur\IdeaProjects\AY-25-26-labs\lab1\lab1-worker`
+- `%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1\lab1-worker`
 
 Files:
 - `worker.py`
@@ -196,7 +196,7 @@ Files:
 
 Install and run:
 ```powershell
-cd "C:\Users\cekur\IdeaProjects\AY-25-26-labs\lab1\lab1-worker"
+cd "%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1\lab1-worker"
 py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe worker.py
@@ -251,8 +251,8 @@ Expected:
 
 Worker logs:
 ```powershell
-Get-Content -Tail 100 "C:\Users\cekur\IdeaProjects\AY-25-26-labs\lab1\lab1-worker\worker.log"
-Get-Content -Tail 100 "C:\Users\cekur\IdeaProjects\AY-25-26-labs\lab1\lab1-worker\worker.err.log"
+Get-Content -Tail 100 "%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1\lab1-worker\worker.log"
+Get-Content -Tail 100 "%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1\lab1-worker\worker.err.log"
 ```
 
 ### 6.2 Rollback check (`COMMUNICATIONS_EXTERNAL_WORKER=false`)
@@ -285,7 +285,7 @@ docker run -d --name lab1-mailhog -p 1025:1025 -p 8025:8025 mailhog/mailhog
 
 Reset failed document to pending:
 ```powershell
-& "C:\Users\cekur\AppData\Local\Programs\mongosh\mongosh.exe" "mongodb://admin:admin@localhost:27017/mzinga?authSource=admin&directConnection=true"
+& "%USERPROFILE%\AppData\Local\Programs\mongosh\mongosh.exe" "mongodb://admin:admin@localhost:27017/mzinga?authSource=admin&directConnection=true"
 ```
 
 Then:
@@ -304,7 +304,7 @@ Expected:
 
 Stop MZinga/worker from their terminals (`Ctrl+C`), then:
 ```powershell
-docker compose -f "C:\Users\cekur\IdeaProjects\AY-25-26-labs\docs\docker-compose-simplified.yml" --env-file "C:\Users\cekur\IdeaProjects\mzinga-apps\.env" -p mzinga-lab1 down
+docker compose -f "%USERPROFILE%\IdeaProjects\AY-25-26-labs\docs\docker-compose-simplified.yml" --env-file "%USERPROFILE%\IdeaProjects\mzinga-apps\.env" -p mzinga-lab1 down
 docker rm -f lab1-mailhog
 ```
 
@@ -316,7 +316,7 @@ docker rm -f lab1-mailhog
 
 ## Screenshots
 Screenshots are under:
-- `C:\Users\cekur\IdeaProjects\AY-25-26-labs\lab1\screenshots`
+- `%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1\screenshots`
 
 Files:
 - `01_mzinga_login.png` (mzinga admin login page)
