@@ -189,7 +189,7 @@ Note: The first two documents lack the `status` field because they were created 
   createdAt: ISODate('2026-04-19T13:50:12.195Z'),
   updatedAt: ISODate('2026-04-19T13:50:12.215Z'),
   __v: 0,
-  status: 'sent'  // ✅ Worker processed successfully
+  status: 'sent'  // Worker processed successfully
 },
 {
   _id: ObjectId('69e4e03d25cc844a08d1cc89'),
@@ -199,16 +199,16 @@ Note: The first two documents lack the `status` field because they were created 
   createdAt: ISODate('2026-04-19T14:01:33.822Z'),
   updatedAt: ISODate('2026-04-19T14:01:33.847Z'),
   __v: 0,
-  status: 'sent'  // ✅ Worker processed successfully
+  status: 'sent'  // Worker processed successfully
 }
 ```
 
 **Verified Behavior:**
 
-✅ **Non-blocking Response**: MZinga returns immediately after saving the document
-✅ **Status Transitions**: `pending` → `processing` → `sent`
-✅ **Email Delivery**: All communications successfully sent via MailHog
-✅ **Worker Processing**: Python worker successfully polled, processed, and updated documents
+**Non-blocking Response**: MZinga returns immediately after saving the document
+**Status Transitions**: `pending` → `processing` → `sent`
+**Email Delivery**: All communications successfully sent via MailHog
+**Worker Processing**: Python worker successfully polled, processed, and updated documents
 
 **Screenshots:**
 
@@ -240,10 +240,13 @@ Note: The first two documents lack the `status` field because they were created 
 
 ## Conclusion
 
-Lab 1 successfully implemented the **Strangler Fig pattern** with **Branch by Abstraction**, achieving:
-- Non-blocking email processing
-- Asynchronous worker pattern
-- Seamless rollback capability (feature flag)
-- Production-ready atomicity and concurrency control
+The key insight is that a simple feature flag (`COMMUNICATIONS_EXTERNAL_WORKER`) allows us to toggle between the old synchronous flow and the new worker-based system without redeploying everything. The trickiest part was getting the atomic `find_one_and_update` right—without it, multiple worker instances could process the same document simultaneously.
 
-The implementation demonstrates how to extract blocking operations from monolithic services into independent workers while maintaining data consistency and transaction safety.
+What worked well:
+- MongoDB atomicity for claiming documents
+- Python's flexibility for parsing Slate AST into HTML
+
+What was more involved than expected:
+- Ensuring the infinite-loop prevention logic was robust (didn't understand the bug at first)
+
+The system now scales horizontally: more workers can be added in order to complete the job faster. Edge cases like failed emails are handled by updating status to `"failed"` so they can be reviewed or retried.
