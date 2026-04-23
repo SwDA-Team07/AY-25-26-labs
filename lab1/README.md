@@ -1,15 +1,16 @@
-# Lab 1 Delivery - s324924
+# Lab 1 Delivery - Team 07
 
-This file mirrors the sections of `docs/06-lab1-step-by-step.md` and includes the exact commands I used to execute the laboratory activity.
+This file mirrors the sections of `docs/06-lab1-step-by-step.md` and includes the exact commands we used to execute the Lab 1 activity as a group delivery.
 
 ## Step 1 - Setup
 
 ### 1.1 Repos and branch
 - Labs repo (delivery): `%USERPROFILE%\IdeaProjects\AY-25-26-labs`
 - MZinga repo (runtime/local edits): `%USERPROFILE%\IdeaProjects\mzinga-apps`
-- Delivery branch: `labs/s324924`
+- Integration branch: `main`
+- Original source branch used for carry-over: `labs/s324924`
 
-### 1.2 Prerequisites I used
+### 1.2 Prerequisites we used
 ```powershell
 node -v
 npm -v
@@ -29,7 +30,7 @@ COMMUNICATIONS_EXTERNAL_WORKER=true
 ```
 
 ### 1.4 Start infrastructure
-I used the simplified compose file (fallback from the guide) because of the replica-set security key issue on Windows.
+We used the simplified compose file (fallback from the guide) because of the replica-set security key issue on Windows.
 
 ```powershell
 docker compose -f "%USERPROFILE%\IdeaProjects\AY-25-26-labs\docs\docker-compose-simplified.yml" --env-file "%USERPROFILE%\IdeaProjects\mzinga-apps\.env" -p mzinga-lab1 up -d database messagebus cache
@@ -61,11 +62,11 @@ MailHog UI:
 
 ## Step 2 - Understand Current Email Flow
 
-I inspected:
+We inspected:
 - `src/collections/Communications.ts` (`afterChange` hook)
 - `src/utils/MailUtils.ts` (`DEBUG_EMAIL_SEND`)
 
-I inspected MongoDB documents with:
+We inspected MongoDB documents with:
 ```powershell
 & "%USERPROFILE%\AppData\Local\Programs\mongosh\mongosh.exe" "mongodb://admin:admin@localhost:27017/mzinga?authSource=admin&directConnection=true"
 ```
@@ -77,7 +78,7 @@ db.communications.findOne()
 db.users.findOne({}, { email: 1 })
 ```
 
-Observed sample shape from my run:
+Observed sample shape from our run:
 
 `users` sample:
 ```json
