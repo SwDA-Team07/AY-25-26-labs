@@ -8,7 +8,6 @@ This file mirrors the sections of `docs/06-lab1-step-by-step.md` and includes th
 - Labs repo (delivery): `%USERPROFILE%\IdeaProjects\AY-25-26-labs`
 - MZinga repo (runtime/local edits): `%USERPROFILE%\IdeaProjects\mzinga-apps`
 - Integration branch: `main`
-- Original source branch used for carry-over: `labs/s324924`
 
 ### 1.2 Prerequisites we used
 ```powershell
