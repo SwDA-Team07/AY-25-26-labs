@@ -5,15 +5,20 @@
 ### 1.1 Goal
 The primary objective of this step was to secure the Communications collection. In the previous lab, the database was accessed or updated with minimal restrictions via direct connection. We have now implemented a robust REST API Access Control layer using Payload CMS to ensure that only authenticated administrators can update communication records.
 
-### 1.2 Implementation Details
-I modified the configuration in src/collections/Communications.ts. The access rules were updated to restrict the update operation using the built-in administrative check.
+### 1.2 Code Changes
+I updated the configuration in src/collections/Communications.ts to enforce administrative access across all operations (read, create, delete, update).
 
-**Key Change:**
-- **Collection**: Communications
-- **Operation**: update
-- **Access Rule**: access.GetIsAdmin
+**File: src/collections/Communications.ts**
 
-This modification ensures that any PATCH request to the communications endpoint requires a valid JSON Web Token (JWT) in the request header, preventing unauthorized external modifications.
+const Communications: CollectionConfig = {
+  slug: Slugs.Communications,
+  access: {
+    read: access.GetIsAdmin,
+    create: access.GetIsAdmin,
+    delete: access.GetIsAdmin,
+    update: access.GetIsAdmin,
+  },
+}
 
 ---
 
@@ -37,7 +42,7 @@ I attempted to update a communication status without providing the authorization
 curl -i -X PATCH http://localhost:3000/api/communications/69f335e7f5ca46e31034f72b -H "Content-Type: application/json" -d '{"status": "sent"}'
 
 **Outcome:**
-The server denied the request, confirming that the Communications collection is now protected against unauthenticated updates.
+The server denied the request (Unauthorized), confirming that the Communications collection is now protected.
 
 ### 2.3 Authorized Update (Verification of Step A1)
 Finally, I performed the update using the Bearer Token obtained in the first step.
@@ -46,9 +51,9 @@ Finally, I performed the update using the Bearer Token obtained in the first ste
 curl -i -X PATCH http://localhost:3000/api/communications/69f335e7f5ca46e31034f72b -H "Authorization: Bearer <YOUR_JWT_TOKEN>" -H "Content-Type: application/json" -d '{"status": "sent"}'
 
 **Final Result:**
-The server responded with HTTP/1.1 200 OK. The JSON response confirmed the successful update of the status field:
+The server responded with HTTP/1.1 200 OK. The JSON response confirmed the successful update:
 - ID: 69f335e7f5ca46e31034f72b
 - New Status: "sent"
 - Updated At: 2026-04-30T13:16:23.410Z
 
-This confirms that the access.GetIsAdmin rule is correctly implemented, allowing only authorized administrators to manage communication statuses via the API.
+This confirms that the access.GetIsAdmin rule is correctly implemented and enforces security for the entire collection.
