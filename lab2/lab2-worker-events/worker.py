@@ -276,7 +276,9 @@ async def handle_message(
 
         operation = data.get("operation")
         document = data.get("doc")
-        communication_id = (document or {}).get("id") if isinstance(document, dict) else None
+        communication_id = None
+        if isinstance(document, dict):
+            communication_id = document.get("id") or document.get("_id")
 
         # worker status updates trigger update events; skip to prevent loops
         if operation == "update":

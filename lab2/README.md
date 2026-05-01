@@ -1,9 +1,9 @@
-# Lab 2 - Member 4 (Sefa): Step B1 + B3 + B4
+# Lab 2 - Sefa (Step B1 + B3 + B4)
 
-This branch contains my Lab 2 Part B contribution on the event-infrastructure side:
-- Step B1: WebHooks/message bus flow analysis from MZinga source code
-- Step B3: RabbitMQ event inspection flow
-- Step B4: event-driven worker implementation (`lab2-worker-events`)
+This branch contains only my assigned Lab 2 Part B scope:
+- Step B1: WebHooks/messageBus analysis
+- Step B3: RabbitMQ event inspection
+- Step B4: event-driven worker implementation
 
 ## Paths used
 - Labs repo: `%USERPROFILE%\IdeaProjects\AY-25-26-labs`
@@ -16,45 +16,50 @@ Files inspected:
 - `%USERPROFILE%\IdeaProjects\mzinga-apps\src\messageBusService.ts`
 
 Observed behavior:
-1. `WebHooks.AddHooksFromList` scans env keys in this format:
-   - `HOOKSURL_<COLLECTION_SLUG>_<HOOK_TYPE>`
-2. If env value is `rabbitmq` and `RABBITMQ_URL` is configured, the hook publishes to RabbitMQ.
-3. Published event shape comes from:
-   - `messageBusService.publishEvent({ type: envUrlsKey, data: eventData })`
-4. Routing key is exactly `event.type`, so for communications it is:
+1. WebHooks scans env keys in format `HOOKSURL_<COLLECTION_SLUG>_<HOOK_TYPE>`.
+2. With `HOOKSURL_COMMUNICATIONS_AFTERCHANGE=rabbitmq`, communication `afterChange` events are published.
+3. Routing key equals env key name:
    - `HOOKSURL_COMMUNICATIONS_AFTERCHANGE`
-5. Two exchanges are declared in `messageBusService`:
+4. Exchanges in message bus service:
    - `mzinga_events` (topic)
    - `mzinga_events_durable` (topic, durable, internal, no auto-delete)
-6. `mzinga_events` is bound to `mzinga_events_durable` with routing key `#`.
-   - This means all events published to `mzinga_events` are forwarded to `mzinga_events_durable`.
+5. Binding exists:
+   - `mzinga_events` -> `mzinga_events_durable` with `#`
+
+### Runtime note from this codebase
+
+For the local run used in this delivery, two local MZinga runtime adjustments were needed so the expected event flow worked consistently:
+- in `WebHooks.ts`, append webhook hooks instead of replacing existing hooks.
+- in `Communications.ts`, set `pending` only on `create` and resolve id as `doc.id || doc._id`.
+
+These are local runtime notes for this setup; they are not committed in this labs repo.
 
 ## Step B3 - event inspection flow
 
-### 1) Configure MZinga event publishing
+### MZinga env
 In `%USERPROFILE%\IdeaProjects\mzinga-apps\.env`:
 
 ```env
+COMMUNICATIONS_EXTERNAL_WORKER=true
 RABBITMQ_URL=amqp://guest:guest@localhost:5672/
 HOOKSURL_COMMUNICATIONS_AFTERCHANGE=rabbitmq
 ```
 
-Then restart MZinga:
+### Start stack
 
 ```powershell
+docker compose -f "%USERPROFILE%\IdeaProjects\AY-25-26-labs\docs\docker-compose-simplified.yml" --env-file "%USERPROFILE%\IdeaProjects\mzinga-apps\.env" -p mzinga-lab2 up -d database messagebus cache
+docker run -d --name lab2-mailhog -p 1025:1025 -p 8025:8025 mailhog/mailhog
 cd "%USERPROFILE%\IdeaProjects\mzinga-apps"
 npm run dev
 ```
 
-### 2) Check RabbitMQ UI
-- Open `http://localhost:15672`
-- Login with `guest` / `guest`
-- Confirm exchanges:
-  - `mzinga_events`
-  - `mzinga_events_durable`
+### RabbitMQ checks
+- UI: `http://localhost:15672`
+- login: `guest` / `guest`
+- verify exchanges and queues
 
-### 3) Print raw events with the existing subscriber example
-
+Optional subscriber command:
 ```powershell
 cd "%USERPROFILE%\IdeaProjects\mzinga-apps\examples\servicebus-subscriber"
 npm install
@@ -63,47 +68,15 @@ $env:ROUTING_KEY="HOOKSURL_COMMUNICATIONS_AFTERCHANGE"
 npm start
 ```
 
-Then create a communication from MZinga admin and verify:
-- routing key is `HOOKSURL_COMMUNICATIONS_AFTERCHANGE`
-- payload includes `data.doc` and `data.operation`
-- operation is `create` on new communication
-- operation is `update` when status is patched later
-
 ## Step B4 - event-driven worker
 
-Implemented under:
+Implemented files:
 - `lab2/lab2-worker-events/worker.py`
 - `lab2/lab2-worker-events/requirements.txt`
 - `lab2/lab2-worker-events/.env`
+- `lab2/lab2-worker-events/.gitignore`
 
-### Dependencies
-
-```text
-aio-pika==9.5.5
-requests==2.32.3
-python-dotenv==1.0.1
-```
-
-### Runtime behavior
-1. Login to MZinga REST API (`/api/users/login`) and store JWT.
-2. Connect to RabbitMQ with `aio_pika.connect_robust`.
-3. Declare `mzinga_events_durable` exchange as topic/durable/internal/no-auto-delete.
-4. Declare durable queue and bind with:
-   - queue: `communications-email-worker`
-   - routing key: `HOOKSURL_COMMUNICATIONS_AFTERCHANGE`
-5. Set `prefetch_count=1`.
-6. Consume loop:
-   - parse event JSON
-   - skip `operation=update` to avoid infinite self-trigger loop
-   - fetch communication by id with `depth=1`
-   - skip if status already `sent` or `processing`
-   - patch status to `processing`
-   - send SMTP email
-   - patch status to `sent` or `failed`
-7. If an API call returns 401, re-login and retry.
-
-### Run commands (Windows PowerShell)
-
+Run command:
 ```powershell
 cd "%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab2\lab2-worker-events"
 python -m venv .venv
@@ -112,16 +85,62 @@ pip install -r requirements.txt
 python worker.py
 ```
 
-## Manual check for this part
-1. Keep MZinga running with:
-   - `COMMUNICATIONS_EXTERNAL_WORKER=true`
-   - `HOOKSURL_COMMUNICATIONS_AFTERCHANGE=rabbitmq`
-2. Start this worker.
-3. Create a communication from admin.
-4. Validate:
-   - event appears immediately in worker logs (no polling delay)
-   - communication goes `pending -> processing -> sent`
-   - MailHog gets the email
-5. Stop worker, create another communication, start worker again.
-   - durable queue should keep the event and process it after reconnect.
+Implemented behavior:
+1. REST login and JWT use for API requests.
+2. RabbitMQ robust connection.
+3. Durable exchange declaration:
+   - `mzinga_events_durable`
+4. Durable named queue:
+   - `communications-email-worker`
+5. Binding key:
+   - `HOOKSURL_COMMUNICATIONS_AFTERCHANGE`
+6. `prefetch_count=1`.
+7. Consume loop:
+   - parse JSON message
+   - skip `operation=update`
+   - fetch communication with `depth=1`
+   - idempotency guard (`sent`/`processing` skip)
+   - patch status `processing` then `sent` / `failed`
+8. Token refresh path on HTTP 401.
+9. `doc.id` / `doc._id` fallback handling in event payload.
 
+## Verification (B scope only)
+
+Summary file:
+- `lab2/logs/verification-summary.log`
+
+Logged checks:
+- state3 event-driven send (`sent`)
+- durability check (`pending` while worker down -> `sent` after restart)
+- queue counters snapshot before and after processing
+
+### Screenshots
+
+Folder:
+- `lab2/screenshots/`
+
+Files:
+- `01_mzinga_login.png`
+- `02_mzinga_comm_pending.png`
+- `03_rabbitmq_queue_ready.png`
+- `04_mailhog_inbox_pre.png`
+- `05_mzinga_comm_sent.png`
+- `06_rabbitmq_queue_after_processing.png`
+- `07_mailhog_inbox_post.png`
+
+### Logs
+
+Folder:
+- `lab2/logs/`
+
+Files:
+- `state3-event.out.log`
+- `state3-durability-recovery.out.log`
+- `verification-summary.log`
+
+## Stop commands
+
+```powershell
+docker compose -f "%USERPROFILE%\IdeaProjects\AY-25-26-labs\docs\docker-compose-simplified.yml" --env-file "%USERPROFILE%\IdeaProjects\mzinga-apps\.env" -p mzinga-lab2 down
+docker rm -f lab2-mailhog
+```

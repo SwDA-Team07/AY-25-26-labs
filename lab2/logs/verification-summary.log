@@ -1,0 +1,4 @@
+STATE3 id=69f498f46f33ba66d85b10af subject="lab2 delivery state3 sent 2026-05-01" final_status=sent
+DURABILITY id=69f4994d6f33ba66d85b10e5 subject="lab2 delivery state3 durability clean 2026-05-01" status_before=pending status_after=sent queue_ready_before=0 queue_ready_after=0 queue_unacked_after=0
+PENDING_SNAPSHOT id=69f49a3a32b89fd953857a62 subject="lab2 delivery pending snapshot clean 2026-05-01" status_before=pending status_after=sent
+QUEUE_SNAPSHOT ready_before_processing=4 ready_after_processing=0
