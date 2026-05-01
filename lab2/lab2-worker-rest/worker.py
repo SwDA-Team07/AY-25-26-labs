@@ -1,20 +1,17 @@
-import asyncio
 import html
-import json
 import os
 import smtplib
+import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from typing import Iterable
 
-import aio_pika
 import requests
-from aio_pika import ExchangeType
 from dotenv import load_dotenv
 
 
 def log(message: str) -> None:
-    print(f"[lab2-worker-events] {message}", flush=True)
+    print(f"[lab2-worker-rest] {message}", flush=True)
 
 
 def parse_int(raw_value: str, fallback: int) -> int:
@@ -202,6 +199,24 @@ class MzingaApiClient:
 
         return response
 
+    def get_pending_communications(self) -> list[dict]:
+        response = self.request(
+            "GET",
+            "/api/communications",
+            params={
+                "where[status][equals]": "pending",
+                "depth": 1,
+                "limit": 50,
+                "sort": "createdAt",
+            },
+        )
+        self.raise_for_status(response, "list pending communications")
+        payload = response.json()
+        docs = payload.get("docs")
+        if isinstance(docs, list):
+            return docs
+        return []
+
     def get_communication(self, communication_id: str) -> dict | None:
         response = self.request(
             "GET",
@@ -257,66 +272,19 @@ def process_communication(document: dict, config: dict) -> None:
     )
 
 
-async def handle_message(
-    message: aio_pika.IncomingMessage,
-    api_client: MzingaApiClient,
-    config: dict,
-) -> None:
-    async with message.process(requeue=True):
-        try:
-            payload = json.loads(message.body.decode("utf-8"))
-        except json.JSONDecodeError:
-            log("invalid json payload, dropping message")
-            return
+def main() -> None:
+    load_dotenv()
 
-        data = payload.get("data") if isinstance(payload, dict) else None
-        if not isinstance(data, dict):
-            log("payload missing 'data', dropping message")
-            return
+    config = {
+        "api_base_url": os.getenv("MZINGA_API_BASE_URL", "http://localhost:3000"),
+        "admin_email": require_env("MZINGA_ADMIN_EMAIL"),
+        "admin_password": require_env("MZINGA_ADMIN_PASSWORD"),
+        "poll_interval_seconds": parse_int(os.getenv("POLL_INTERVAL_SECONDS", "5"), 5),
+        "smtp_host": os.getenv("SMTP_HOST", "localhost"),
+        "smtp_port": parse_int(os.getenv("SMTP_PORT", "1025"), 1025),
+        "email_from": os.getenv("EMAIL_FROM", "worker@mzinga.io"),
+    }
 
-        operation = data.get("operation")
-        document = data.get("doc")
-        communication_id = None
-        if isinstance(document, dict):
-            communication_id = document.get("id") or document.get("_id")
-
-        # worker status updates trigger update events; skip to prevent loops
-        if operation == "update":
-            log("skip update event")
-            return
-
-        if not communication_id:
-            log("event missing doc.id, dropping message")
-            return
-
-        communication_id = str(communication_id)
-        log(f"received create event for {communication_id}")
-
-        full_document = api_client.get_communication(communication_id)
-        if not full_document:
-            log(f"{communication_id} not found, skipping")
-            return
-
-        current_status = str(full_document.get("status") or "").strip().lower()
-
-        # idempotency guard for duplicate delivery or retries
-        if current_status in {"sent", "processing"}:
-            log(f"{communication_id} already {current_status}, skipping")
-            return
-
-        api_client.set_status(communication_id, "processing")
-        log(f"{communication_id} set to processing")
-
-        try:
-            process_communication(full_document, config)
-            api_client.set_status(communication_id, "sent")
-            log(f"{communication_id} sent")
-        except Exception as err:
-            api_client.set_status(communication_id, "failed")
-            log(f"{communication_id} failed: {err}")
-
-
-async def consume_events(config: dict) -> None:
     api_client = MzingaApiClient(
         base_url=config["api_base_url"],
         email=config["admin_email"],
@@ -324,67 +292,49 @@ async def consume_events(config: dict) -> None:
     )
     api_client.authenticate()
 
-    connection = await aio_pika.connect_robust(config["rabbitmq_url"])
-    log("connected to rabbitmq")
-
-    async with connection:
-        channel = await connection.channel()
-        await channel.set_qos(prefetch_count=1)
-        log("prefetch set to 1")
-
-        exchange = await channel.declare_exchange(
-            config["exchange_name"],
-            ExchangeType.TOPIC,
-            durable=True,
-            auto_delete=False,
-            internal=True,
-        )
-        queue = await channel.declare_queue(
-            config["queue_name"],
-            durable=True,
-            auto_delete=False,
-        )
-        await queue.bind(exchange, routing_key=config["routing_key"])
-
-        log(
-            "consumer ready "
-            f"(exchange={config['exchange_name']}, queue={config['queue_name']}, "
-            f"routing_key={config['routing_key']})"
-        )
-
-        async with queue.iterator() as queue_iter:
-            async for message in queue_iter:
-                await handle_message(message, api_client, config)
-
-
-def load_config() -> dict:
-    load_dotenv()
-
-    return {
-        "api_base_url": os.getenv("MZINGA_API_BASE_URL", "http://localhost:3000"),
-        "admin_email": require_env("MZINGA_ADMIN_EMAIL"),
-        "admin_password": require_env("MZINGA_ADMIN_PASSWORD"),
-        "rabbitmq_url": os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/"),
-        "exchange_name": os.getenv("EXCHANGE_NAME", "mzinga_events_durable"),
-        "queue_name": os.getenv("QUEUE_NAME", "communications-email-worker"),
-        "routing_key": os.getenv("ROUTING_KEY", "HOOKSURL_COMMUNICATIONS_AFTERCHANGE"),
-        "smtp_host": os.getenv("SMTP_HOST", "localhost"),
-        "smtp_port": parse_int(os.getenv("SMTP_PORT", "1025"), 1025),
-        "email_from": os.getenv("EMAIL_FROM", "worker@mzinga.io"),
-    }
-
-
-def main() -> None:
-    config = load_config()
     log("worker started")
     log(
         "settings: "
         f"api={normalize_base_url(config['api_base_url'])}, "
-        f"exchange={config['exchange_name']}, "
-        f"queue={config['queue_name']}, "
-        f"routing_key={config['routing_key']}"
+        f"poll={config['poll_interval_seconds']}s"
     )
-    asyncio.run(consume_events(config))
+
+    while True:
+        try:
+            pending_docs = api_client.get_pending_communications()
+
+            if not pending_docs:
+                time.sleep(config["poll_interval_seconds"])
+                continue
+
+            for pending_doc in pending_docs:
+                communication_id = str(pending_doc.get("id") or "").strip()
+                if not communication_id:
+                    continue
+
+                try:
+                    api_client.set_status(communication_id, "processing")
+                    log(f"{communication_id} set to processing")
+
+                    full_document = api_client.get_communication(communication_id)
+                    if not full_document:
+                        log(f"{communication_id} not found after claim")
+                        continue
+
+                    process_communication(full_document, config)
+                    api_client.set_status(communication_id, "sent")
+                    log(f"{communication_id} sent")
+                except Exception as err:
+                    try:
+                        api_client.set_status(communication_id, "failed")
+                    except Exception as patch_err:
+                        log(f"{communication_id} failed and status patch failed: {patch_err}")
+                    log(f"{communication_id} failed: {err}")
+
+            time.sleep(config["poll_interval_seconds"])
+        except Exception as err:
+            log(f"loop error: {err}")
+            time.sleep(config["poll_interval_seconds"])
 
 
 if __name__ == "__main__":
