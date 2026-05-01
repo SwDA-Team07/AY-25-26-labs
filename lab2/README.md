@@ -27,9 +27,9 @@ access: {
 
 This is required for worker `PATCH /api/communications/:id`.
 
-## Local runtime fixes applied while running Lab 2
+## Local runtime fixes used in this run
 
-These were needed so the required Lab 2 flow works correctly in this setup.
+These two changes are not listed explicitly as separate lab steps in `07-lab2-step-by-step.md`, but they were needed in this codebase so the required Lab 2 flow works correctly.
 
 ### Communications hook guard
 Local file:
@@ -68,7 +68,7 @@ Snippet used:
 originalHooks[hookType] = [].concat(originalHooks[hookType] || [], hooks);
 ```
 
-Without this, the RabbitMQ webhook could replace the existing `afterChange` logic.
+Without this, the RabbitMQ webhook could replace the existing `afterChange` logic and `status: pending` would not be set by the collection hook.
 
 ## Step A2 - REST API shape checks
 
@@ -180,11 +180,9 @@ Folder:
 - `lab2/logs/`
 
 Main files used in this rerun:
-- `mzinga-dev.log`
 - `state2-rest.out.log`
 - `state3-event.out.log`
 - `state3-durability-recovery.out.log`
-- `state3-process-pending.out.log`
 - `verification-summary.log`
 
 ## Stop services
