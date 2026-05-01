@@ -1,0 +1,5 @@
+[lab2-worker-rest] authenticated to mzinga api
+[lab2-worker-rest] worker started
+[lab2-worker-rest] settings: api=http://localhost:3000, poll=5s
+[lab2-worker-rest] 69f498e56f33ba66d85b1046 set to processing
+[lab2-worker-rest] 69f498e56f33ba66d85b1046 sent
