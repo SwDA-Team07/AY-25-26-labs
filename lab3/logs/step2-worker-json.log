@@ -1,0 +1,4 @@
+{"service": "email-worker", "event": "authenticated", "level": "info", "timestamp": "2026-05-14T14:37:58.045492Z"}
+{"service": "email-worker", "api_base_url": "http://localhost:3000", "poll_interval_s": 5, "event": "worker_started", "level": "info", "timestamp": "2026-05-14T14:37:58.045890Z"}
+{"service": "email-worker", "status": "processing", "event": "status_updated", "doc_id": "6a05df60ce0e89964bdcf55c", "level": "info", "timestamp": "2026-05-14T14:42:40.793402Z"}
+{"service": "email-worker", "status": "sent", "event": "processing_completed", "doc_id": "6a05df60ce0e89964bdcf55c", "level": "info", "timestamp": "2026-05-14T14:42:41.011676Z"}
