@@ -1,0 +1,5 @@
+STATE2 id=6a05cf6b1b9ff40938063014 final_status=sent
+STATE3 id=69f9f707eb3427ce5f483bbc subject="lab2 state3 event retry 2026-05-05" final_status=sent
+DURABILITY id=69f9f767eb3427ce5f483be6 subject="lab2 durability 2026-05-05" status_before=pending status_after=sent queue_ready_before=2 queue_ready_after=0 queue_unacked_after=0
+QUEUE_SNAPSHOT ready_before_processing=2 ready_after_processing=0
+MAILHOG_SNAPSHOT total_after_processing=2 subjects="lab2 durability 2026-05-05; lab2 state3 event retry 2026-05-05"
