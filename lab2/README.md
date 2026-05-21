@@ -1,6 +1,6 @@
 # Lab 2 - REST API Worker and Event-Driven Worker
 
-This folder documents the Lab 2 delivery on branch `lab2/fillippo`.
+This folder documents the team Lab 2 delivery on branch `main`.
 
 ## Part A - State 2 REST API Worker
 
@@ -78,14 +78,14 @@ docker run -d --name lab2-mailhog -p 1025:1025 -p 8025:8025 mailhog/mailhog
 Start MZinga:
 
 ```sh
-cd /Users/filippo/Documents/GitHub/AY-25-26-labs/mzinga-apps
+cd <MZINGA_REPO_ROOT>
 COMMUNICATIONS_EXTERNAL_WORKER=true npm run dev
 ```
 
 Start the REST worker:
 
 ```sh
-cd /Users/filippo/Documents/GitHub/AY-25-26-labs/lab2/lab2-worker-rest
+cd <LABS_REPO_ROOT>/lab2/lab2-worker-rest
 source .venv/bin/activate
 python worker.py
 ```
