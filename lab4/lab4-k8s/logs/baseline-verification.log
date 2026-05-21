@@ -1,0 +1,44 @@
+Lab 4 - Kubernetes baseline verification
+Branch: labs/s348651
+Scope: prerequisites, demo service, Step 1, Step 2
+
+== Prerequisites ==
+
+$ minikube version
+minikube version: v1.38.1
+commit: c93a4cb9311efc66b90d33ea03f75f2c4120e9b0
+
+$ docker --version
+Docker version 29.4.1, build 055a478
+
+$ kubectl version --client
+Client Version: v1.34.1
+Kustomize Version: v5.7.1
+
+$ kubectl get nodes
+NAME       STATUS   ROLES           AGE     VERSION
+minikube   Ready    control-plane   7m34s   v1.35.1
+
+== Kubernetes baseline resources ==
+
+$ kubectl get pods -n mzinga-lab4
+NAME                      READY   STATUS    RESTARTS   AGE
+webapp-5f4f778774-hc6d4   1/1     Running   0          7m11s
+webapp-5f4f778774-wsz2c   1/1     Running   0          7m11s
+webapp-5f4f778774-zth26   1/1     Running   0          7m11s
+
+$ kubectl get svc -n mzinga-lab4
+NAME     TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+webapp   ClusterIP   10.106.69.178   <none>        80/TCP    7m20s
+
+== Service verification through port-forward ==
+
+$ kubectl port-forward service/webapp 8080:80 -n mzinga-lab4
+Forwarding from 127.0.0.1:8080 -> 8080
+Forwarding from [::1]:8080 -> 8080
+
+$ curl -s http://localhost:8080/
+{"version": "1.0.0", "color": "blue", "hostname": "webapp-5f4f778774-hc6d4", "message": "Hello from version 1.0.0"}
+
+$ curl -s http://localhost:8080/health
+{"status": "ok"}
