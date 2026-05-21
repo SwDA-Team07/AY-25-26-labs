@@ -1,0 +1,46 @@
+# FAMILY emails_processed_total
+# HELP emails_processed_total Total number of communications processed
+# TYPE emails_processed_total counter
+emails_processed_total{recipient_count="1",status="sent"} 1.0
+
+# FAMILY email_processing_duration_seconds_bucket
+email_processing_duration_seconds_bucket{le="0.0"} 0.0
+email_processing_duration_seconds_bucket{le="5.0"} 1.0
+email_processing_duration_seconds_bucket{le="10.0"} 1.0
+email_processing_duration_seconds_bucket{le="25.0"} 1.0
+email_processing_duration_seconds_bucket{le="50.0"} 1.0
+email_processing_duration_seconds_bucket{le="75.0"} 1.0
+email_processing_duration_seconds_bucket{le="100.0"} 1.0
+email_processing_duration_seconds_bucket{le="250.0"} 1.0
+email_processing_duration_seconds_bucket{le="500.0"} 1.0
+email_processing_duration_seconds_bucket{le="750.0"} 1.0
+email_processing_duration_seconds_bucket{le="1000.0"} 1.0
+email_processing_duration_seconds_bucket{le="2500.0"} 1.0
+email_processing_duration_seconds_bucket{le="5000.0"} 1.0
+email_processing_duration_seconds_bucket{le="7500.0"} 1.0
+email_processing_duration_seconds_bucket{le="10000.0"} 1.0
+email_processing_duration_seconds_bucket{le="+Inf"} 1.0
+
+# FAMILY smtp_send_duration_seconds_bucket
+smtp_send_duration_seconds_bucket{le="0.0"} 0.0
+smtp_send_duration_seconds_bucket{le="5.0"} 1.0
+smtp_send_duration_seconds_bucket{le="10.0"} 1.0
+smtp_send_duration_seconds_bucket{le="25.0"} 1.0
+smtp_send_duration_seconds_bucket{le="50.0"} 1.0
+smtp_send_duration_seconds_bucket{le="75.0"} 1.0
+smtp_send_duration_seconds_bucket{le="100.0"} 1.0
+smtp_send_duration_seconds_bucket{le="250.0"} 1.0
+smtp_send_duration_seconds_bucket{le="500.0"} 1.0
+smtp_send_duration_seconds_bucket{le="750.0"} 1.0
+smtp_send_duration_seconds_bucket{le="1000.0"} 1.0
+smtp_send_duration_seconds_bucket{le="2500.0"} 1.0
+smtp_send_duration_seconds_bucket{le="5000.0"} 1.0
+smtp_send_duration_seconds_bucket{le="7500.0"} 1.0
+smtp_send_duration_seconds_bucket{le="10000.0"} 1.0
+smtp_send_duration_seconds_bucket{le="+Inf"} 1.0
+
+# FAMILY worker_poll_total
+# HELP worker_poll_total Number of poll cycles
+# TYPE worker_poll_total counter
+worker_poll_total{result="empty"} 22.0
+worker_poll_total{result="found"} 1.0

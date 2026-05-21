@@ -1,0 +1,11 @@
+trace_id=c0971ace57f04922006c86f77862b968
+communication_id=6a0f3a8ef9f873073fbc621e
+span_count=67
+span_names=GET,GET /api/communications/:id,PATCH,PATCH /api/communications/:id,process_communication,serialize_body,send_email,...
+process_communication.status=OK
+process_communication.doc_id=6a0f3a8ef9f873073fbc621e
+serialize_body.node_count=1
+send_email.status=OK
+send_email.recipient_count=1
+has_GET_span=True
+has_PATCH_span=True

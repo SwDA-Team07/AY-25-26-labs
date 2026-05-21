@@ -1,0 +1,22 @@
+failure_trace_id=a32bfc043217dcf13e8ae260a2801db5
+failure_doc_id=6a0f3ab0f9f873073fbc6256
+send_email.status=ERROR
+process_communication.status=ERROR
+error_message=ConnectionRefusedError: [Errno 61] Connection refused
+
+recovery_trace_id=319d95c95828f3bad01662dc0b3c69a8
+recovery_doc_id=6a0f3ab0f9f873073fbc6256
+send_email.status=OK
+final_doc_status=sent
+
+metrics_after_failure:
+emails_processed_total{recipient_count="1",status="sent"} 1.0
+emails_processed_total{recipient_count="0",status="failed"} 1.0
+worker_poll_total{result="found"} 2.0
+worker_poll_total{result="empty"} 36.0
+
+metrics_after_recovery:
+emails_processed_total{recipient_count="1",status="sent"} 2.0
+emails_processed_total{recipient_count="0",status="failed"} 1.0
+worker_poll_total{result="found"} 3.0
+worker_poll_total{result="empty"} 45.0
