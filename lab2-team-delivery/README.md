@@ -15,13 +15,13 @@ PATCH /api/communications/:id
 
 ### Implemented Files
 
-- `lab2/lab2-worker-rest/worker.py`
-- `lab2/lab2-worker-rest/requirements.txt`
-- `lab2/lab2-worker-rest/.env`
-- `lab2/lab2-worker-rest/.gitignore`
-- `lab2/logs/state2-rest.out.log`
-- `lab2/screenshots/partA_mailhog.png`
-- `lab2/screenshots/partA_mzinga_sent.png`
+- `lab2-team-delivery/lab2-worker-rest/worker.py`
+- `lab2-team-delivery/lab2-worker-rest/requirements.txt`
+- `lab2-team-delivery/lab2-worker-rest/.env`
+- `lab2-team-delivery/lab2-worker-rest/.gitignore`
+- `lab2-team-delivery/logs/state2-rest.out.log`
+- `lab2-team-delivery/screenshots/partA_mailhog.png`
+- `lab2-team-delivery/screenshots/partA_mzinga_sent.png`
 
 ### Local Test Accounts
 
@@ -85,7 +85,7 @@ COMMUNICATIONS_EXTERNAL_WORKER=true npm run dev
 Start the REST worker:
 
 ```sh
-cd <LABS_REPO_ROOT>/lab2/lab2-worker-rest
+cd <LABS_REPO_ROOT>/lab2-team-delivery/lab2-worker-rest
 source .venv/bin/activate
 python worker.py
 ```
@@ -103,7 +103,7 @@ Manual verification flow:
    - `pending -> processing -> sent`
 7. Confirm the email appears in MailHog at `http://localhost:8025`.
 8. Confirm the REST worker has no direct MongoDB dependency:
-   - `grep -RInE "mongodb|pymongo|MONGODB_URI" lab2/lab2-worker-rest`
+   - `grep -RInE "mongodb|pymongo|MONGODB_URI" lab2-team-delivery/lab2-worker-rest`
 
 Worker log from the successful local run:
 
@@ -123,10 +123,10 @@ STATE2 id=6a05cf6b1b9ff40938063014 final_status=sent
 
 Evidence:
 
-- `lab2/logs/state2-rest.out.log`
-- `lab2/logs/verification-summary.log`
-- `lab2/screenshots/partA_mailhog.png`
-- `lab2/screenshots/partA_mzinga_sent.png`
+- `lab2-team-delivery/logs/state2-rest.out.log`
+- `lab2-team-delivery/logs/verification-summary.log`
+- `lab2-team-delivery/screenshots/partA_mailhog.png`
+- `lab2-team-delivery/screenshots/partA_mzinga_sent.png`
 
 ## Part B - State 3 Event-Driven Worker
 
@@ -222,15 +222,15 @@ npm start
 
 Implemented files:
 
-- `lab2/lab2-worker-events/worker.py`
-- `lab2/lab2-worker-events/requirements.txt`
-- `lab2/lab2-worker-events/.env`
-- `lab2/lab2-worker-events/.gitignore`
+- `lab2-team-delivery/lab2-worker-events/worker.py`
+- `lab2-team-delivery/lab2-worker-events/requirements.txt`
+- `lab2-team-delivery/lab2-worker-events/.env`
+- `lab2-team-delivery/lab2-worker-events/.gitignore`
 
 Run command:
 
 ```powershell
-cd "%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab2\lab2-worker-events"
+cd "%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab2-team-delivery\lab2-worker-events"
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 pip install -r requirements.txt
@@ -308,7 +308,7 @@ Verification procedure:
 
 1. Stop the REST polling worker from Part A.
 2. Start MailHog and MZinga with RabbitMQ publishing enabled.
-3. Start `lab2/lab2-worker-events/worker.py`.
+3. Start `lab2-team-delivery/lab2-worker-events/worker.py`.
 4. Create a Communication document in the MZinga admin UI.
 5. Confirm the worker processes the message immediately without polling.
 6. Confirm status transitions in MZinga:
@@ -322,7 +322,7 @@ Verification procedure:
 
 Summary file:
 
-- `lab2/logs/verification-summary.log`
+- `lab2-team-delivery/logs/verification-summary.log`
 
 Recorded summary lines:
 
@@ -333,19 +333,19 @@ Recorded summary lines:
 
 Logs:
 
-- `lab2/logs/state3-event.out.log`
-- `lab2/logs/state3-durability-recovery.out.log`
-- `lab2/logs/verification-summary.log`
+- `lab2-team-delivery/logs/state3-event.out.log`
+- `lab2-team-delivery/logs/state3-durability-recovery.out.log`
+- `lab2-team-delivery/logs/verification-summary.log`
 
 Screenshots:
 
-- `lab2/screenshots/01_mzinga_login.png`
-- `lab2/screenshots/02_mzinga_comm_pending.png`
-- `lab2/screenshots/03_rabbitmq_queue_ready.png`
-- `lab2/screenshots/04_mailhog_inbox_pre.png`
-- `lab2/screenshots/05_mzinga_comm_sent.png`
-- `lab2/screenshots/06_rabbitmq_queue_after_processing.png`
-- `lab2/screenshots/07_mailhog_inbox_post.png`
+- `lab2-team-delivery/screenshots/01_mzinga_login.png`
+- `lab2-team-delivery/screenshots/02_mzinga_comm_pending.png`
+- `lab2-team-delivery/screenshots/03_rabbitmq_queue_ready.png`
+- `lab2-team-delivery/screenshots/04_mailhog_inbox_pre.png`
+- `lab2-team-delivery/screenshots/05_mzinga_comm_sent.png`
+- `lab2-team-delivery/screenshots/06_rabbitmq_queue_after_processing.png`
+- `lab2-team-delivery/screenshots/07_mailhog_inbox_post.png`
 
 ## Stop
 

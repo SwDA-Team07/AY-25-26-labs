@@ -187,7 +187,7 @@ hooks: {
 ## Step 5 - Build Python Worker
 
 Worker folder (delivery artifact):
-- `%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1\lab1-worker`
+- `%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1-team-delivery\lab1-worker`
 
 Files:
 - `worker.py`
@@ -196,7 +196,7 @@ Files:
 
 Install and run:
 ```powershell
-cd "%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1\lab1-worker"
+cd "%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1-team-delivery\lab1-worker"
 py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe worker.py
@@ -251,8 +251,8 @@ Expected:
 
 Worker logs:
 ```powershell
-Get-Content -Tail 100 "%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1\lab1-worker\worker.log"
-Get-Content -Tail 100 "%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1\lab1-worker\worker.err.log"
+Get-Content -Tail 100 "%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1-team-delivery\lab1-worker\worker.log"
+Get-Content -Tail 100 "%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1-team-delivery\lab1-worker\worker.err.log"
 ```
 
 ### 6.2 Rollback check (`COMMUNICATIONS_EXTERNAL_WORKER=false`)
@@ -309,14 +309,14 @@ docker rm -f lab1-mailhog
 ```
 
 ## Delivery Artifacts in This Repo
-- `lab1/lab1-worker/worker.py`
-- `lab1/lab1-worker/requirements.txt`
-- `lab1/lab1-worker/.env`
-- `lab1/README.md`
+- `lab1-team-delivery/lab1-worker/worker.py`
+- `lab1-team-delivery/lab1-worker/requirements.txt`
+- `lab1-team-delivery/lab1-worker/.env`
+- `lab1-team-delivery/README.md`
 
 ## Screenshots
 Screenshots are under:
-- `%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1\screenshots`
+- `%USERPROFILE%\IdeaProjects\AY-25-26-labs\lab1-team-delivery\screenshots`
 
 Files:
 - `01_mzinga_login.png` (mzinga admin login page)

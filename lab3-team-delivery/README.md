@@ -41,7 +41,7 @@ the following steps.
 A Lab 3 worker copy was created in:
 
 ```text
-lab3/lab3-worker-observable/
+lab3-team-delivery/lab3-worker-observable/
 ```
 
 The original Lab 2 REST worker remains unchanged. The new worker keeps the same
@@ -68,13 +68,13 @@ part of Lab 3 Step 3.
 Static checks completed:
 
 ```sh
-python3 -m py_compile lab3/lab3-worker-observable/worker.py
+python3 -m py_compile lab3-team-delivery/lab3-worker-observable/worker.py
 ```
 
 The old text logger was also checked:
 
 ```sh
-rg "print\\(|\\[lab2-worker-rest\\]" lab3/lab3-worker-observable
+rg "print\\(|\\[lab2-worker-rest\\]" lab3-team-delivery/lab3-worker-observable
 ```
 
 The search returns no matches, confirming that the Lab 3 worker no longer uses
@@ -97,11 +97,11 @@ Runtime evidence collected from the local stack:
 Suggested locations:
 
 ```text
-lab3/logs/metrics.log
-lab3/screenshots/step1-jaeger-search.png
-lab3/screenshots/step1-jaeger-trace.png
-lab3/screenshots/step2-mzinga-status-sent.png
-lab3/logs/step2-worker-json.log
+lab3-team-delivery/logs/metrics.log
+lab3-team-delivery/screenshots/step1-jaeger-search.png
+lab3-team-delivery/screenshots/step1-jaeger-trace.png
+lab3-team-delivery/screenshots/step2-mzinga-status-sent.png
+lab3-team-delivery/logs/step2-worker-json.log
 ```
 
 The metrics evidence is kept as a log file only. Jaeger remains screenshot-based
@@ -111,13 +111,13 @@ structured logging format and `doc_id` correlation.
 
 ## Evidence Interpretation
 
-`lab3/logs/metrics.log` proves that MZinga exposes Prometheus metrics. The
+`lab3-team-delivery/logs/metrics.log` proves that MZinga exposes Prometheus metrics. The
 `http_request_duration_seconds` histogram shows measured HTTP request latency,
 with labels such as method, path, status code, tenant, project type, and
 version. The `up 1` gauge confirms that the MZinga process was running when the
 metrics endpoint was scraped.
 
-`lab3/logs/step2-worker-json.log` proves that the Lab 3 worker writes structured
+`lab3-team-delivery/logs/step2-worker-json.log` proves that the Lab 3 worker writes structured
 JSON logs:
 
 - `authenticated` confirms that the worker successfully logged in to the

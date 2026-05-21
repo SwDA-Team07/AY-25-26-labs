@@ -33,12 +33,12 @@ activities.
 
 ## Implemented Files
 
-- `lab4/lab4-k8s/app.py`
-- `lab4/lab4-k8s/Dockerfile`
-- `lab4/lab4-k8s/.dockerignore`
-- `lab4/lab4-k8s/k8s/namespace.yaml`
-- `lab4/lab4-k8s/k8s/rolling/service.yaml`
-- `lab4/lab4-k8s/k8s/rolling/deployment-v1.yaml`
+- `lab4-team-delivery/lab4-k8s/app.py`
+- `lab4-team-delivery/lab4-k8s/Dockerfile`
+- `lab4-team-delivery/lab4-k8s/.dockerignore`
+- `lab4-team-delivery/lab4-k8s/k8s/namespace.yaml`
+- `lab4-team-delivery/lab4-k8s/k8s/rolling/service.yaml`
+- `lab4-team-delivery/lab4-k8s/k8s/rolling/deployment-v1.yaml`
 
 ## Prerequisites
 
@@ -85,7 +85,7 @@ the Pod hostname, so responses show which Pod handled each request.
 The Dockerfile uses `python:3.12-slim`, copies `app.py`, exposes port `8080`,
 and maps build arguments into runtime environment variables.
 
-Run from `lab4/lab4-k8s`:
+Run from `lab4-team-delivery/lab4-k8s`:
 
 ```sh
 docker build --build-arg APP_VERSION=1.0.0 --build-arg APP_COLOR=blue -t mzinga-webapp:1.0.0 .
@@ -142,7 +142,7 @@ The Service exposes port `80` inside the cluster and forwards traffic to port
 
 The command output is also stored in:
 
-- `lab4/lab4-k8s/logs/baseline-verification.log`
+- `lab4-team-delivery/lab4-k8s/logs/baseline-verification.log`
 
 Kubernetes resources after deploying the baseline:
 
