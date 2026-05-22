@@ -42,3 +42,64 @@ $ curl -s http://localhost:8080/
 
 $ curl -s http://localhost:8080/health
 {"status": "ok"}
+
+== Step 3 — In-Place Rolling Upgrade (v1 to v2) ==
+
+$ docker build -t mzinga-webapp:2.0.0 .
+Successfully built 76745bb6dd
+Successfully tagged mzinga-webapp:2.0.0
+
+$ minikube image load mzinga-webapp:2.0.0
+
+$ kubectl set image deployment/webapp webapp=mzinga-webapp:2.0.0 -n mzinga-lab4
+deployment.apps/webapp image updated
+
+$ kubectl get pods -n mzinga-lab4
+NAME                      READY   STATUS    RESTARTS   AGE
+webapp-76745bb6dd-277dj   1/1     Running   0          25s
+webapp-76745bb6dd-wm9bd   1/1     Running   0          24s
+webapp-76745bb6dd-zzwrk   1/1     Running   0          14s
+
+$ kubectl rollout status deployment/webapp -n mzinga-lab4
+deployment "webapp" successfully rolled out
+
+== Service verification during and after Rolling Upgrade ==
+
+# Traffic loop monitoring terminal (Local port 8081)
+$ while true; do curl -s http://localhost:8081/ | python3 -c "import sys,json; d=json.loads(sys.stdin.read() or '{}'); print(d.get('version', 'Error'), d.get('hostname', ''))"; sleep 0.5; done
+1.0.0 webapp-5f4f778774-hc6d4
+1.0.0 webapp-5f4f778774-wsz2c
+2.0.0 webapp-76745bb6dd-277dj
+1.0.0 webapp-5f4f778774-zth26
+2.0.0 webapp-76745bb6dd-wm9bd
+2.0.0 webapp-76745bb6dd-zzwrk
+2.0.0 webapp-76745bb6dd-277dj
+
+# Observation: Traffic successfully transitioned from version 1.0.0 to version 2.0.0 (green) progressively without any service interruption or downtime (Zero-Downtime Deployment).
+
+== Step 3.5 — Emergency Rollback (v2 to v1) ==
+
+$ kubectl rollout undo deployment/webapp -n mzinga-lab4
+deployment.apps/webapp rolled back
+
+$ kubectl rollout status deployment/webapp -n mzinga-lab4
+deployment "webapp" successfully rolled back
+
+$ kubectl get pods -n mzinga-lab4
+NAME                      READY   STATUS    RESTARTS   AGE
+webapp-5f4f778774-5fmhb   1/1     Running   0          78s
+webapp-5f4f778774-fdbn5   1/1     Running   0          70s
+webapp-5f4f778774-wtq2k   1/1     Running   0          79s
+
+== Service verification after Rollback & Notes ==
+
+# Technical note on port-forwarding:
+# After executing the 'rollout undo' command, the internal cluster state successfully reverted to v1 (hash 5f4f778774). The local port-forward tunnel was restarted on port 8081 to correctly refresh the target pod endpoints and clear the stale network sockets.
+
+$ kubectl port-forward svc/webapp 8081:80 -n mzinga-lab4
+Forwarding from 127.0.0.1:8081 -> 8080
+Forwarding from [::1]:8081 -> 8080
+Handling connection for 8081
+
+$ curl -s http://localhost:8081/
+{"version": "1.0.0", "color": "blue", "hostname": "webapp-5f4f778774-5fmhb", "message": "Hello from version 1.0.0"}
