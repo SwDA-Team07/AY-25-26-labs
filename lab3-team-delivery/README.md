@@ -133,3 +133,62 @@ JSON logs:
 Together, these lines verify the expected Step 2 behavior: the worker no longer
 emits free-form text logs, and each processing event is represented as a
 queryable JSON object with stable fields.
+
+## Team Task Check (Step 7-8-9) on Team Baseline
+
+Check date: **2026-05-21**
+
+Baseline used:
+
+- `origin/main` at `c029dcc`
+- Lab3 base content from commit `6d1fef7` (`lab3: complete observability steps 1 and 2`)
+
+### Step 7 (Traces) - Partial
+
+Evidence:
+
+- `lab3-team-delivery/logs/step7-team-baseline-check.log`
+
+Observed:
+
+- log + Jaeger trace correlation works (`trace_id` matches)
+- spans `process_communication`, `serialize_body`, `send_email` are present
+- span attributes (`doc_id`, `node_count`, `recipient_count`) are present
+- expected auto HTTP spans (`GET`/`PATCH`) were not observed in this run
+
+Status:
+
+- Step 7 can be pushed as **partially verified** on the baseline used for this check.
+
+### Step 8 (Metrics) - Blocked
+
+Evidence:
+
+- `lab3-team-delivery/logs/step8-team-baseline-blocker.log`
+
+Observed:
+
+- `http://localhost:8000/metrics` not exposed on baseline worker
+- required custom metrics families are unavailable
+
+Status:
+
+- Step 8 is **blocked** until Step 4 metrics implementation is merged in team branch.
+
+### Step 9 (Failure + Recovery) - Verified with Step 8 Limitation
+
+Evidence:
+
+- `lab3-team-delivery/logs/step9-team-baseline-check.log`
+
+Observed:
+
+- failure simulation sets communication to `failed`
+- failure trace shows `send_email` status `ERROR`
+- recovery path returns same communication to `sent`
+- recovery trace shows `send_email` status `OK`
+
+Status:
+
+- Step 9 log/trace/status behavior is verified.
+- Step 9 metrics part remains blocked by the Step 8 blocker above.

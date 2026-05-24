@@ -1,0 +1,20 @@
+Date: 2026-05-21
+Branch baseline: origin/main (c029dcc), based on Fillippo Step 1-2 work (6d1fef7)
+
+Success communication id: 6a0f43fe999dbf4524028e69
+Log trace id: 2d1c8ded330796c9649d484d4445e606
+
+Jaeger trace check:
+- span_count: 4
+- has process_communication: true
+- has serialize_body: true
+- has send_email: true
+- has GET span: false
+- has PATCH span: false
+
+Span attributes:
+- process_communication.status: OK
+- process_communication.doc_id: 6a0f43fe999dbf4524028e69
+- serialize_body.node_count: 1
+- send_email.recipient_count: 1
+- send_email.status: OK

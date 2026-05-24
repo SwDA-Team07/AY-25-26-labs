@@ -1,0 +1,16 @@
+Date: 2026-05-21
+Branch baseline: origin/main (c029dcc), based on Fillippo Step 1-2 work (6d1fef7)
+
+Result: BLOCKED
+
+Observed:
+- curl http://localhost:8000/metrics failed (connection refused)
+- team baseline worker has no Prometheus metric exporter stack for Lab3 Step 4
+- required custom metrics are missing on this baseline:
+  - emails_processed_total
+  - email_processing_duration_seconds
+  - smtp_send_duration_seconds
+  - worker_poll_total
+
+Conclusion:
+- Step 8 cannot be completed/pushed as done until Step 4 metrics implementation is merged in team branch.

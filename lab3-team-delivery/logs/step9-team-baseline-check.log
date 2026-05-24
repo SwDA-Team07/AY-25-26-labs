@@ -1,0 +1,21 @@
+Date: 2026-05-21
+Branch baseline: origin/main (c029dcc), based on Fillippo Step 1-2 work (6d1fef7)
+
+Failure simulation:
+- MailHog stopped
+- communication id: 6a0f4424999dbf4524028e92
+- log trace id: 74632edd8d5b44e8422bf35e0dc87ea4
+- communication status after processing: failed
+- Jaeger: process_communication.status=ERROR
+- Jaeger: send_email.status=ERROR
+
+Recovery:
+- MailHog restarted
+- same communication reset to pending
+- log trace id: 721c1a7ee558d9ec58617ce642deeb33
+- communication final status: sent
+- Jaeger: send_email.status=OK
+
+Note:
+- Step 9 log+trace+status recovery is verified on team baseline.
+- Step 9 metrics verification remains blocked by Step 8 blocker.
