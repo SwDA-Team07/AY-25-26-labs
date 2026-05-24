@@ -1,9 +1,7 @@
-# Lab 4 Report - Kubernetes Baseline
+# Lab 4 Report - Baseline, Rolling, Recreate
 
-This report documents Filippo's Lab 4 activity on branch `labs/s348651`.
-The work covers the setup and baseline Kubernetes deployment required before
-the later deployment strategies: rolling update, recreate, blue-green, and
-canary.
+This report documents the team Lab 4 work currently integrated on `main` and
+the Step 4 contribution prepared on `lab4/sefa`.
 
 ## Objective
 
@@ -27,9 +25,8 @@ Covered steps from `docs/09-lab4-step-by-step.md`:
 - The Demo Service
 - Step 1 - Build the Container Images
 - Step 2 - Deploy the Initial Service (v1)
-
-The upgrade strategies from Step 3 onward are left for the following Lab 4
-activities.
+- Step 3 - In-Place Rolling Upgrade
+- Step 4 - Recreate (Replace) Strategy
 
 ## Implemented Files
 
@@ -39,6 +36,10 @@ activities.
 - `lab4-team-delivery/lab4-k8s/k8s/namespace.yaml`
 - `lab4-team-delivery/lab4-k8s/k8s/rolling/service.yaml`
 - `lab4-team-delivery/lab4-k8s/k8s/rolling/deployment-v1.yaml`
+- `lab4-team-delivery/lab4-k8s/k8s/rolling/deployment-v2.yaml`
+- `lab4-team-delivery/lab4-k8s/k8s/recreate/service.yaml`
+- `lab4-team-delivery/lab4-k8s/k8s/recreate/deployment-v1.yaml`
+- `lab4-team-delivery/lab4-k8s/k8s/recreate/deployment-v2.yaml`
 
 ## Prerequisites
 
@@ -137,6 +138,44 @@ kubectl rollout status deployment/webapp -n mzinga-lab4
 
 The Service exposes port `80` inside the cluster and forwards traffic to port
 `8080` on the Pods. Local access is done with `kubectl port-forward`.
+
+## Step 3 - In-Place Rolling Upgrade
+
+Step 3 is already present on `main` and uses:
+
+- `lab4-team-delivery/lab4-k8s/k8s/rolling/deployment-v2.yaml`
+
+The deployment keeps the same name (`webapp`) and updates image/env values to
+`mzinga-webapp:2.0.0`, `APP_VERSION=2.0.0`, `APP_COLOR=green`.
+
+## Step 4 - Recreate Strategy (Sefa)
+
+Step 4 is implemented in:
+
+- `lab4-team-delivery/lab4-k8s/k8s/recreate/service.yaml`
+- `lab4-team-delivery/lab4-k8s/k8s/recreate/deployment-v1.yaml`
+- `lab4-team-delivery/lab4-k8s/k8s/recreate/deployment-v2.yaml`
+
+The recreate deployments use:
+
+- same deployment name: `webapp`
+- `strategy.type: Recreate`
+- v1 image/env in `deployment-v1.yaml`
+- v2 image/env in `deployment-v2.yaml`
+
+Apply flow:
+
+```sh
+kubectl apply -f k8s/recreate/service.yaml
+kubectl apply -f k8s/recreate/deployment-v1.yaml
+kubectl rollout status deployment/webapp -n mzinga-lab4
+
+kubectl apply -f k8s/recreate/deployment-v2.yaml
+kubectl rollout status deployment/webapp -n mzinga-lab4
+
+kubectl rollout undo deployment/webapp -n mzinga-lab4
+kubectl rollout status deployment/webapp -n mzinga-lab4
+```
 
 ## Verification Evidence
 
