@@ -1,0 +1,40 @@
+Lab4 runtime verification summary
+UTC timestamp: 2026-05-24T16:44:27Z
+
+Environment
+- Kubernetes context: minikube
+- Namespace used: mzinga-lab4
+
+Step 1 - Build and load images
+- Built image mzinga-webapp:1.0.0 (APP_VERSION=1.0.0, APP_COLOR=blue)
+- Built image mzinga-webapp:2.0.0 (APP_VERSION=2.0.0, APP_COLOR=green)
+- Loaded both images into minikube
+
+Step 2/3 - Rolling strategy
+- Deployed rolling v1 and verified response: 1.0.0 blue
+- Applied rolling v2 and verified response: 2.0.0 green
+- Rollback (rollout undo) verified response: 1.0.0 blue
+
+Step 4 - Recreate strategy
+- Deployed recreate v1 and verified response: 1.0.0 blue
+- Applied recreate v2 and verified response: 2.0.0 green
+- Rollback (rollout undo) verified response: 1.0.0 blue
+
+Step 5 - Blue-Green strategy
+- Deployed webapp-blue (v1) and webapp-green (v2)
+- Service initially on blue, verified response: 1.0.0 blue
+- Switched selector to green, verified response: 2.0.0 green
+- Switched selector back to blue, verified response: 1.0.0 blue
+
+Step 6 - Canary strategy
+- Deployed stable (9 replicas, v1) and canary (1 replica, v2)
+- Traffic sampling from in-cluster requests (20 requests each phase):
+  - stable=9  canary=1  -> 16 x 1.0.0, 4 x 2.0.0
+  - stable=7  canary=3  -> 19 x 1.0.0, 1 x 2.0.0
+  - stable=5  canary=5  -> 12 x 1.0.0, 8 x 2.0.0
+  - stable=0  canary=10 -> 20 x 2.0.0
+  - stable=10 canary=0  -> 20 x 1.0.0
+
+Cleanup
+- Deleted namespace mzinga-lab4
+- Verified cluster returned to default namespaces only
