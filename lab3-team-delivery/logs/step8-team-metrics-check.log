@@ -1,0 +1,26 @@
+Date: 2026-06-07
+Branch: main (team delivery)
+
+Endpoint:
+- http://localhost:8000/metrics
+
+Observed metric families:
+- emails_processed_total
+- email_processing_duration_seconds_bucket
+- email_processing_duration_seconds_count
+- email_processing_duration_seconds_sum
+- smtp_send_duration_seconds_bucket
+- smtp_send_duration_seconds_count
+- smtp_send_duration_seconds_sum
+- worker_poll_total
+
+After the success, failure, and recovery run:
+- worker_poll_total{result="empty"} 26.0
+- worker_poll_total{result="found"} 3.0
+- emails_processed_total{recipient_count="1",status="sent"} 2.0
+- emails_processed_total{recipient_count="1",status="failed"} 1.0
+- email_processing_duration_seconds_count 3.0
+- smtp_send_duration_seconds_count 3.0
+
+Result:
+- Step 8 metrics verification is complete.

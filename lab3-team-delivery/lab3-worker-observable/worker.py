@@ -5,6 +5,7 @@ import smtplib
 import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from pathlib import Path
 from typing import Iterable
 
 import requests
@@ -18,12 +19,15 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from opentelemetry.trace import Status, StatusCode
 
 # OpenTelemetry Metrics (Step 4: custom Prometheus metrics)
 from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.exporter.prometheus import PrometheusMetricReader
 from prometheus_client import start_http_server
+
+load_dotenv(Path(__file__).with_name(".env"))
 
 # 1. Configurazione OpenTelemetry (Tracing)
 SERVICE_NAME = "email-worker"
@@ -183,6 +187,7 @@ def send_email(smtp_host, smtp_port, from_email, subject, to_emails, cc_emails, 
     with tracer.start_as_current_span("send_email") as span:
         all_recipients = to_emails + cc_emails + bcc_emails
         span.set_attribute("recipient_count", len(all_recipients))
+        smtp_start = None
         try:
             message = MIMEMultipart("alternative")
             message["From"] = from_email
@@ -194,11 +199,13 @@ def send_email(smtp_host, smtp_port, from_email, subject, to_emails, cc_emails, 
             smtp_start = time.perf_counter()
             with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as smtp:
                 smtp.sendmail(from_email, all_recipients, message.as_string())
-            smtp_duration.record(time.perf_counter() - smtp_start)
         except Exception as e:
-            span.set_status(trace.Status(trace.StatusCode.ERROR))
+            span.set_status(Status(StatusCode.ERROR, str(e)))
             span.record_exception(e)
             raise e
+        finally:
+            if smtp_start is not None:
+                smtp_duration.record(time.perf_counter() - smtp_start)
 
 class MzingaApiClient:
     def __init__(self, base_url, email, password):
@@ -227,49 +234,62 @@ class MzingaApiClient:
     def get_pending_communications(self):
         resp = self.request("GET", "/api/communications", 
                             params={"where[status][equals]": "pending", "depth": 1, "limit": 50})
+        self.raise_for_status(resp, "list communications")
         return resp.json().get("docs", [])
 
     def get_communication(self, comm_id):
         resp = self.request("GET", f"/api/communications/{comm_id}", params={"depth": 1})
-        return resp.json() if resp.ok else None
+        self.raise_for_status(resp, "get communication")
+        return resp.json()
 
     def set_status(self, comm_id, status):
-        self.request("PATCH", f"/api/communications/{comm_id}", json={"status": status})
+        resp = self.request("PATCH", f"/api/communications/{comm_id}", json={"status": status})
+        self.raise_for_status(resp, f"set status {status}")
 
     @staticmethod
     def raise_for_status(resp, action):
         if not resp.ok: raise RuntimeError(f"{action} failed: {resp.status_code}")
 
-def process_communication(document: dict, config: dict) -> None:
+def process_communication(api: MzingaApiClient, comm_id: str, config: dict) -> None:
     """Requirement 3.3: Root span for processing"""
     with tracer.start_as_current_span("process_communication") as span:
-        doc_id = str(document.get("id"))
-        span.set_attribute("doc_id", doc_id)
+        span.set_attribute("doc_id", comm_id)
         log.info("starting_processing")
         start_time = time.perf_counter()
+        recipient_count = 0
+        outcome = "failed"
 
         try:
+            api.set_status(comm_id, "processing")
+            document = api.get_communication(comm_id)
+
             subject = str(document.get("subject") or "")
             body_html = serialize_nodes(document.get("body") or [])
             tos = extract_emails(document.get("tos"))
+            cc_emails = extract_emails(document.get("ccs"))
+            bcc_emails = extract_emails(document.get("bccs"))
+            recipient_count = len(tos) + len(cc_emails) + len(bcc_emails)
             if not tos: raise ValueError("No recipients found")
 
             send_email(config["smtp_host"], config["smtp_port"], config["email_from"],
-                       subject, tos, extract_emails(document.get("ccs")),
-                       extract_emails(document.get("bccs")), body_html)
+                       subject, tos, cc_emails, bcc_emails, body_html)
 
-            processing_duration.record(time.perf_counter() - start_time)
-            emails_processed.add(1, {"status": "sent", "recipient_count": len(tos)})
-            log.info("email_delivery_completed")
+            api.set_status(comm_id, "sent")
+            outcome = "sent"
+            log.info("communication_sent")
         except Exception as e:
-            span.set_status(trace.Status(trace.StatusCode.ERROR))
+            span.set_status(Status(StatusCode.ERROR, str(e)))
             span.record_exception(e)
-            emails_processed.add(1, {"status": "failed", "recipient_count": 0})
+            try:
+                api.set_status(comm_id, "failed")
+            except Exception as status_error:
+                log.error("failed_status_update_failed", error=str(status_error))
             log.error("processing_failed", error=str(e))
-            raise e
+        finally:
+            processing_duration.record(time.perf_counter() - start_time)
+            emails_processed.add(1, {"status": outcome, "recipient_count": recipient_count})
 
 def main():
-    load_dotenv()
     configure_logging()
 
     config = {
@@ -291,17 +311,12 @@ def main():
             poll_counter.add(1, {"result": "found" if pending else "empty"})
             for doc in pending:
                 comm_id = doc.get("id")
+                if not comm_id:
+                    log.error("missing_doc_id")
+                    continue
                 structlog.contextvars.bind_contextvars(doc_id=comm_id)
                 try:
-                    api.set_status(comm_id, "processing")
-                    full_doc = api.get_communication(comm_id)
-                    if full_doc:
-                        process_communication(full_doc, config)
-                        api.set_status(comm_id, "sent")
-                        log.info("communication_sent")
-                except Exception as e:
-                    api.set_status(comm_id, "failed")
-                    log.error("document_error", error=str(e))
+                    process_communication(api, str(comm_id), config)
                 finally:
                     structlog.contextvars.unbind_contextvars("doc_id")
             time.sleep(config["poll_interval"])

@@ -1,20 +1,28 @@
-Date: 2026-05-21
-Branch baseline: origin/main (c029dcc), based on Fillippo Step 1-2 work (6d1fef7)
+Date: 2026-06-07
+Branch: main (team delivery)
 
-Success communication id: 6a0f43fe999dbf4524028e69
-Log trace id: 2d1c8ded330796c9649d484d4445e606
+Success communication id: 6a25da6f756b74d028d76839
+Final communication status: sent
+Worker log trace id: 47ccf77cfe2e532a59a3c2626aace5c8
+
+Jaeger service check:
+- services include email-worker
+- trace id 47ccf77cfe2e532a59a3c2626aace5c8 is visible for email-worker
 
 Jaeger trace check:
-- span_count: 4
-- has process_communication: true
-- has serialize_body: true
-- has send_email: true
-- has GET span: false
-- has PATCH span: false
+- root span process_communication is present
+- process_communication.doc_id = 6a25da6f756b74d028d76839
+- serialize_body is a child span of process_communication
+- serialize_body.node_count = 1
+- send_email is a child span of process_communication
+- send_email.recipient_count = 1
+- GET http://localhost:3000/api/communications/6a25da6f756b74d028d76839?depth=1 is a child span of process_communication
+- PATCH http://localhost:3000/api/communications/6a25da6f756b74d028d76839 is a child span of process_communication
+- MZinga server spans for GET /api/communications/:id and PATCH /api/communications/:id are linked under the worker HTTP client spans
 
-Span attributes:
-- process_communication.status: OK
-- process_communication.doc_id: 6a0f43fe999dbf4524028e69
-- serialize_body.node_count: 1
-- send_email.recipient_count: 1
-- send_email.status: OK
+Worker log correlation:
+- starting_processing contains doc_id 6a25da6f756b74d028d76839 and trace_id 47ccf77cfe2e532a59a3c2626aace5c8
+- communication_sent contains the same doc_id and trace_id
+
+Result:
+- Step 7 trace verification is complete.

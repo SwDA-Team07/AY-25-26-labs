@@ -1,4 +1,4 @@
-{"service": "email-worker", "event": "authenticated", "level": "info", "timestamp": "2026-05-14T14:37:58.045492Z"}
-{"service": "email-worker", "api_base_url": "http://localhost:3000", "poll_interval_s": 5, "event": "worker_started", "level": "info", "timestamp": "2026-05-14T14:37:58.045890Z"}
-{"service": "email-worker", "status": "processing", "event": "status_updated", "doc_id": "6a05df60ce0e89964bdcf55c", "level": "info", "timestamp": "2026-05-14T14:42:40.793402Z"}
-{"service": "email-worker", "status": "sent", "event": "processing_completed", "doc_id": "6a05df60ce0e89964bdcf55c", "level": "info", "timestamp": "2026-05-14T14:42:41.011676Z"}
+{"service": "email-worker", "poll_interval": 5, "prometheus_port": 8000, "event": "worker_started", "level": "info", "timestamp": "2026-06-07T20:53:47.921364Z"}
+{"service": "email-worker", "event": "authenticated", "level": "info", "timestamp": "2026-06-07T20:53:47.958310Z"}
+{"service": "email-worker", "event": "starting_processing", "doc_id": "6a25da6f756b74d028d76839", "level": "info", "timestamp": "2026-06-07T20:54:08.015455Z", "trace_id": "47ccf77cfe2e532a59a3c2626aace5c8", "span_id": "19d5323d9b091b0b"}
+{"service": "email-worker", "event": "communication_sent", "doc_id": "6a25da6f756b74d028d76839", "level": "info", "timestamp": "2026-06-07T20:54:08.051304Z", "trace_id": "47ccf77cfe2e532a59a3c2626aace5c8", "span_id": "19d5323d9b091b0b"}

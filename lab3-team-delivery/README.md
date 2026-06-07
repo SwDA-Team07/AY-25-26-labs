@@ -1,15 +1,14 @@
-# Lab 3 Report - Steps 1 and 2
+# Lab 3 Report
 
-This report documents the first two Lab 3 activities for branch `labs/s348651`.
-The work starts from the Lab 2 Part A REST worker and prepares it for the
-observability additions introduced later in Lab 3.
+This report documents the Lab 3 team delivery work. The implementation starts
+from the Lab 2 Part A REST worker and adds the observability requirements from
+the Lab 3 guide.
 
 ## Objective
 
-The goal of these steps is to establish the existing observability baseline in
-MZinga and replace the worker's plain text output with structured JSON logs.
-The OpenTelemetry trace and metrics instrumentation is intentionally left for
-the next Lab 3 steps.
+The goal is to establish the existing observability baseline in MZinga and add
+structured logs, OpenTelemetry traces, and Prometheus metrics to the Python
+email worker.
 
 ## Prerequisite
 
@@ -55,13 +54,13 @@ Implemented changes:
   timestamps;
 - added a fixed `service="email-worker"` field to every log line;
 - replaced text messages such as `[lab2-worker-rest] ...` with stable event
-  names such as `worker_started`, `status_updated`,
-  `processing_completed`, and `processing_failed`;
+  names such as `worker_started`, `authenticated`, `starting_processing`,
+  `communication_sent`, and `processing_failed`;
 - bound `doc_id` while a single Communication is being processed, so all logs
   for that item can be correlated.
 
-`trace_id` and `span_id` are not included yet because distributed tracing is
-part of Lab 3 Step 3.
+At this step, `trace_id` and `span_id` are prepared for the distributed tracing
+work added in the following steps.
 
 ## Verification
 
@@ -80,7 +79,7 @@ rg "print\\(|\\[lab2-worker-rest\\]" lab3-team-delivery/lab3-worker-observable
 The search returns no matches, confirming that the Lab 3 worker no longer uses
 the old `print`-based log format.
 
-## Evidence To Add
+## Evidence
 
 Runtime evidence collected from the local stack:
 
@@ -90,11 +89,9 @@ Runtime evidence collected from the local stack:
   service visible.
 - Screenshot: one opened Jaeger trace waterfall for a MZinga request.
 - Log file: worker terminal output showing JSON logs with the same `doc_id` on
-  `status_updated` and `processing_completed`.
-- Optional screenshot: final Communication status `sent` in the MZinga admin
-  UI.
+  `starting_processing` and `communication_sent`.
 
-Suggested locations:
+Evidence locations:
 
 ```text
 lab3-team-delivery/logs/metrics.log
@@ -123,11 +120,10 @@ JSON logs:
 - `authenticated` confirms that the worker successfully logged in to the
   MZinga REST API.
 - `worker_started` records the API base URL and polling interval.
-- `status_updated` with `status="processing"` shows that a Communication was
-  claimed by the worker.
-- `processing_completed` with `status="sent"` shows that the same
-  Communication was processed successfully.
-- The repeated `doc_id` value `6a05df60ce0e89964bdcf55c` links the processing
+- `starting_processing` shows that a Communication was claimed by the worker.
+- `communication_sent` shows that the same Communication was processed
+  successfully.
+- The repeated `doc_id` value `6a25da6f756b74d028d76839` links the processing
   and completion log entries to the same Communication.
 
 Together, these lines verify the expected Step 2 behavior: the worker no longer
@@ -237,69 +233,6 @@ lab3-team-delivery/screenshots/step5_6_jaeger_proof_JSON.png
 - `lab3-team-delivery/screenshots/step5_6_jaeger_proof_closelook.png` is a screenshot from Jaeger to show results of the process. Also in this photo, in the top left the process is searched with `doc_id`.
 - `lab3-team-delivery/screenshots/step5_6_jaeger_proof_JSON.png` is a screenshot of the Jaeger with process details on the screen. It has `trace_id` observable in the JSON form.
 
-## Team Task Check (Step 7-8-9) on Team Baseline
-
-Check date: **2026-05-21**
-
-Baseline used:
-
-- `origin/main` at `c029dcc`
-- Lab3 base content from commit `6d1fef7` (`lab3: complete observability steps 1 and 2`)
-
-### Step 7 (Traces) - Partial
-
-Evidence:
-
-- `lab3-team-delivery/logs/step7-team-baseline-check.log`
-
-Observed:
-
-- log + Jaeger trace correlation works (`trace_id` matches)
-- spans `process_communication`, `serialize_body`, `send_email` are present
-- span attributes (`doc_id`, `node_count`, `recipient_count`) are present
-- expected auto HTTP spans (`GET`/`PATCH`) were not observed in this run
-
-Status:
-
-- Step 7 can be pushed as **partially verified** on the baseline used for this check.
-
-### Step 8 (Metrics) - Blocked
-
-Evidence:
-
-- `lab3-team-delivery/logs/step8-team-baseline-blocker.log`
-
-Observed:
-
-- `http://localhost:8000/metrics` not exposed on baseline worker
-- required custom metrics families are unavailable
-
-Status:
-
-- Step 8 was **blocked** until Step 4 metrics implementation was merged in the
-  team branch. **It is now unblocked** by the Step 4 metrics work documented
-  below: the worker exposes `/metrics` on `PROMETHEUS_PORT` (8000) and defines the
-  four required instruments. Re-run the Step 8 verification on the updated
-  baseline to finalise shared evidence.
-
-### Step 9 (Failure + Recovery) - Verified with Step 8 Limitation
-
-Evidence:
-
-- `lab3-team-delivery/logs/step9-team-baseline-check.log`
-
-Observed:
-
-- failure simulation sets communication to `failed`
-- failure trace shows `send_email` status `ERROR`
-- recovery path returns same communication to `sent`
-- recovery trace shows `send_email` status `OK`
-
-Status:
-
-- Step 9 log/trace/status behavior is verified.
-- Step 9 metrics part is unblocked together with Step 8 (see Step 4 below).
-
 ## Step 4 - Custom Prometheus Metrics
 
 This step adds the third observability pillar to the worker and is what unblocks
@@ -325,9 +258,10 @@ Implemented changes in `lab3-team-delivery/lab3-worker-observable/`:
   | `smtp_send_duration_seconds` | Histogram | around `smtp.sendmail` in `send_email` | - |
   | `worker_poll_total` | Counter | each poll cycle in `main()` | `result` (`found`/`empty`) |
 
-  The `status="failed"` increment is emitted in the `except` block of
-  `process_communication`, next to the span ERROR status, so a failure surfaces
-  consistently across trace, log, and metric.
+  The `status="failed"` increment is emitted from `process_communication` when
+  an exception is handled, next to the span ERROR status, so a failure surfaces
+  consistently across trace, log, and metric. Processing and SMTP durations are
+  recorded for the failure path as well.
 - `.env` - added `PROMETHEUS_PORT=8000` and documented
   `OTEL_EXPORTER_OTLP_ENDPOINT`.
 
@@ -350,6 +284,64 @@ curl -s http://localhost:8000/metrics | grep -E \
 
 Create a Communication in the MZinga admin UI and refresh the metrics endpoint:
 the counters increment and the histogram buckets accumulate. Stopping MailHog and
-sending again increments `emails_processed_total{status="failed"}`. With this in
-place, the Step 8 blocker (`curl :8000/metrics` connection refused) is resolved
-and the Step 9 metrics path can be finalised.
+sending again increments `emails_processed_total{status="failed"}`. Restarting
+MailHog and resetting the same Communication to `pending` verifies the recovery
+path and increments `emails_processed_total{status="sent"}` again.
+
+## Step 7 - Verify Traces in Jaeger
+
+Evidence:
+
+- `lab3-team-delivery/logs/step7-team-baseline-check.log`
+
+Observed:
+
+- log + Jaeger trace correlation works (`trace_id` matches)
+- spans `process_communication`, `serialize_body`, `send_email` are present
+- span attributes (`doc_id`, `node_count`, `recipient_count`) are present
+- auto HTTP spans for `GET /api/communications/:id` and
+  `PATCH /api/communications/:id` are present as children of
+  `process_communication`
+- MZinga server spans are linked under the worker HTTP client spans
+
+Status:
+
+- Step 7 is verified on the team delivery branch.
+
+## Step 8 - Verify Metrics in Prometheus
+
+Evidence:
+
+- `lab3-team-delivery/logs/step8-team-metrics-check.log`
+
+Observed:
+
+- `http://localhost:8000/metrics` is exposed by the worker
+- `emails_processed_total` is present with `status` and `recipient_count`
+- `email_processing_duration_seconds_bucket` is present
+- `smtp_send_duration_seconds_bucket` is present
+- `worker_poll_total` is present with `result`
+- success, failure, and recovery runs increment the expected counters
+
+Status:
+
+- Step 8 is verified on the team delivery branch.
+
+## Step 9 - Simulate and Diagnose a Failure
+
+Evidence:
+
+- `lab3-team-delivery/logs/step9-team-baseline-check.log`
+
+Observed:
+
+- failure simulation sets communication to `failed`
+- failure metrics increment `emails_processed_total{status="failed"}`
+- failure trace shows `process_communication` and `send_email` status `ERROR`
+- recovery path returns same communication to `sent`
+- recovery trace shows `send_email` status `OK`
+- recovery metrics increment `emails_processed_total{status="sent"}`
+
+Status:
+
+- Step 9 is verified on the team delivery branch.
