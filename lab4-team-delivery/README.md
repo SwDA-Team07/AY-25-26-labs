@@ -1,7 +1,6 @@
-# Lab 4 Report - Baseline, Rolling, Recreate
+# Lab 4 Report - Baseline, Rolling, Recreate, Blue-Green
 
-This report documents the team Lab 4 work currently integrated on `main` and
-the Step 4 contribution prepared on `lab4/sefa`.
+This report documents the team Lab 4 work currently integrated on `main`.
 
 ## Objective
 
@@ -27,6 +26,7 @@ Covered steps from `docs/09-lab4-step-by-step.md`:
 - Step 2 - Deploy the Initial Service (v1)
 - Step 3 - In-Place Rolling Upgrade
 - Step 4 - Recreate (Replace) Strategy
+- Step 5 - Blue-Green Deployment
 
 ## Implemented Files
 
@@ -40,6 +40,9 @@ Covered steps from `docs/09-lab4-step-by-step.md`:
 - `lab4-team-delivery/lab4-k8s/k8s/recreate/service.yaml`
 - `lab4-team-delivery/lab4-k8s/k8s/recreate/deployment-v1.yaml`
 - `lab4-team-delivery/lab4-k8s/k8s/recreate/deployment-v2.yaml`
+- `lab4-team-delivery/lab4-k8s/k8s/blue-green/service.yaml`
+- `lab4-team-delivery/lab4-k8s/k8s/blue-green/blue-deployment.yaml`
+- `lab4-team-delivery/lab4-k8s/k8s/blue-green/green-deployment.yaml`
 
 ## Prerequisites
 
@@ -175,6 +178,40 @@ kubectl rollout status deployment/webapp -n mzinga-lab4
 
 kubectl rollout undo deployment/webapp -n mzinga-lab4
 kubectl rollout status deployment/webapp -n mzinga-lab4
+```
+
+## Step 5 - Blue-Green Deployment
+
+Step 5 is implemented in:
+
+- `lab4-team-delivery/lab4-k8s/k8s/blue-green/service.yaml`
+- `lab4-team-delivery/lab4-k8s/k8s/blue-green/blue-deployment.yaml`
+- `lab4-team-delivery/lab4-k8s/k8s/blue-green/green-deployment.yaml`
+
+The blue-green setup keeps two complete environments available at the same time:
+
+- `webapp-blue` runs `mzinga-webapp:1.0.0` with `APP_COLOR=blue`.
+- `webapp-green` runs `mzinga-webapp:2.0.0` with `APP_COLOR=green`.
+- the `webapp` Service starts with selector `app: webapp, slot: blue`.
+
+Traffic is switched by patching only the Service selector. This makes the cutover
+and rollback atomic because the Deployments are already running before traffic is
+moved.
+
+Apply flow:
+
+```sh
+kubectl apply -f k8s/blue-green/blue-deployment.yaml
+kubectl apply -f k8s/blue-green/green-deployment.yaml
+kubectl apply -f k8s/blue-green/service.yaml
+kubectl rollout status deployment/webapp-blue -n mzinga-lab4
+kubectl rollout status deployment/webapp-green -n mzinga-lab4
+
+kubectl patch service webapp -n mzinga-lab4 \
+  -p '{"spec":{"selector":{"app":"webapp","slot":"green"}}}'
+
+kubectl patch service webapp -n mzinga-lab4 \
+  -p '{"spec":{"selector":{"app":"webapp","slot":"blue"}}}'
 ```
 
 ## Verification Evidence
