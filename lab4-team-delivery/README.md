@@ -1,24 +1,23 @@
 # Lab 4 Report - Baseline, Rolling, Recreate, Blue-Green
 
-This report documents the team Lab 4 work.
+Team Lab 4 delivery notes.
 
-## Objective
+## Goal
 
-The goal of this part is to prepare a local Kubernetes environment with
-Minikube and deploy a minimal containerised HTTP service. The service reports
-its version, color, and Pod hostname, which makes later deployment strategies
-observable with simple `curl` requests.
+Prepare a local Kubernetes environment with Minikube and deploy a small
+containerised HTTP service. The service returns its version, color, and Pod
+hostname, so each deployment strategy can be checked with `curl`.
 
-This baseline establishes:
+The baseline includes:
 
 - the local Kubernetes prerequisites;
 - the demo service used by the lab;
 - the two Docker image variants required by the exercises;
 - the initial v1 Kubernetes Deployment and Service.
 
-## Scope
+## Covered Work
 
-Covered scope:
+Covered:
 
 - Prerequisites
 - The Demo Service
@@ -28,7 +27,7 @@ Covered scope:
 - Step 4 - Recreate (Replace) Strategy
 - Step 5 - Blue-Green Deployment
 
-## Implemented Files
+## Files
 
 - `lab4-team-delivery/lab4-k8s/app.py`
 - `lab4-team-delivery/lab4-k8s/Dockerfile`
@@ -187,15 +186,14 @@ Step 5 is implemented in:
 - `lab4-team-delivery/lab4-k8s/k8s/blue-green/blue-deployment.yaml`
 - `lab4-team-delivery/lab4-k8s/k8s/blue-green/green-deployment.yaml`
 
-The blue-green setup keeps two complete environments available at the same time:
+Blue-green keeps two complete environments available at the same time:
 
 - `webapp-blue` runs `mzinga-webapp:1.0.0` with `APP_COLOR=blue`.
 - `webapp-green` runs `mzinga-webapp:2.0.0` with `APP_COLOR=green`.
 - the `webapp` Service starts with selector `app: webapp, slot: blue`.
 
-Traffic is switched by patching only the Service selector. This makes the cutover
-and rollback atomic because the Deployments are already running before traffic is
-moved.
+Traffic is switched by patching only the Service selector. Cutover and rollback
+are atomic because both Deployments are already running before traffic is moved.
 
 Apply flow:
 
@@ -213,7 +211,7 @@ kubectl patch service webapp -n mzinga-lab4 \
   -p '{"spec":{"selector":{"app":"webapp","slot":"blue"}}}'
 ```
 
-## Verification Evidence
+## Verification
 
 The command output is also stored in:
 
@@ -247,15 +245,13 @@ $ curl -s http://localhost:8080/health
 {"status": "ok"}
 ```
 
-## Evidence Interpretation
+## Notes
 
-The `kubectl get nodes` output confirms that the local Minikube cluster is
-running and ready. The Pod list confirms that the initial Deployment created
-three healthy replicas of the v1 service. The Service output confirms that
-`webapp` is exposed as a `ClusterIP` service on port `80`.
+The `kubectl get nodes` output shows the local Minikube cluster running and
+ready. The Pod list shows three healthy v1 replicas. The Service output shows
+`webapp` exposed as a `ClusterIP` service on port `80`.
 
-The `curl /` response confirms that traffic reaches a Kubernetes Pod through the
-Service and that the application is running the expected baseline version:
-`1.0.0` / `blue`. The `curl /health` response confirms that the health endpoint
-used by the readiness and liveness probes is available and returns a successful
-JSON response.
+The `curl /` response shows traffic reaching a Kubernetes Pod through the
+Service and returning the expected baseline version: `1.0.0` / `blue`. The
+`curl /health` response shows the probe endpoint returning a successful JSON
+response.

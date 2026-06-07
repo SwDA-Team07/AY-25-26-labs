@@ -1,6 +1,6 @@
 # Lab 2 - REST API Worker and Event-Driven Worker
 
-This folder documents the team Lab 2 delivery.
+Team Lab 2 delivery notes.
 
 ## Part A - State 2 REST API Worker
 
@@ -13,7 +13,7 @@ through:
 PATCH /api/communications/:id
 ```
 
-### Implemented Files
+### Files
 
 - `lab2-team-delivery/lab2-worker-rest/worker.py`
 - `lab2-team-delivery/lab2-worker-rest/requirements.txt`
@@ -23,7 +23,7 @@ PATCH /api/communications/:id
 - `lab2-team-delivery/screenshots/partA_mailhog.png`
 - `lab2-team-delivery/screenshots/partA_mzinga_sent.png`
 
-### Local Test Accounts
+### Test Accounts
 
 - worker/admin API user: `admin.lab1@example.com`
 - recipient user: `user@example.com`
@@ -32,7 +32,7 @@ The worker uses the admin account only to authenticate against the REST API.
 The recipient user is selected in the Communication document and is resolved
 through `depth=1`.
 
-### Runtime Requirements
+### Before Running
 
 MZinga must include the Lab 1 Communications changes before running the REST
 worker:
@@ -92,7 +92,7 @@ python worker.py
 
 ### Verification
 
-Manual verification flow:
+Check flow:
 
 1. Login to MZinga admin at `http://localhost:3000/admin`.
 2. Create or reuse the recipient user `user@example.com`.
@@ -134,7 +134,7 @@ Part B evolves the Part A REST worker from polling to RabbitMQ-driven
 processing. The worker still uses the MZinga REST API as the source of truth for
 reading Communications and writing status transitions.
 
-### Scope
+### Split
 
 - Sefa: Step B1 WebHooks/messageBus analysis.
 - Sefa: Step B3 RabbitMQ event inspection.
@@ -163,7 +163,7 @@ Observed behavior:
 5. Binding exists:
    - `mzinga_events` -> `mzinga_events_durable` with `#`
 
-### Runtime Notes
+### Local Run Notes
 
 For the local Part B run, the MZinga runtime must include the Lab 1 and Lab 2
 Part A Communication changes:
@@ -180,8 +180,7 @@ Part A Communication changes:
   hooks, so the `pending` hook and the RabbitMQ publisher hook both run.
 - Communication id is resolved as `doc.id || doc._id` where needed.
 
-These are local runtime notes for this setup; they are not committed in this
-labs repo.
+These notes describe the local runtime setup used for the delivery.
 
 ### Step B3 - Event Inspection Flow
 
@@ -237,7 +236,7 @@ pip install -r requirements.txt
 python worker.py
 ```
 
-Implemented behavior:
+Worker behavior:
 
 1. REST login and JWT use for API requests.
 2. RabbitMQ robust connection.

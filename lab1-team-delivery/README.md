@@ -1,7 +1,6 @@
 # Lab 1 Delivery - Team 07
 
-This file documents the Lab 1 group delivery and the commands used for the
-local verification run.
+Team run notes for Lab 1. Commands are the ones used during the local check.
 
 ## Step 1 - Setup
 
@@ -110,7 +109,7 @@ Observed sample shape from our run:
 Local file changed in MZinga repo:
 - `%USERPROFILE%\IdeaProjects\mzinga-apps\src\collections\Communications.ts`
 
-Implemented:
+Changes:
 - `status` select field with:
   - `pending`
   - `processing`
@@ -204,7 +203,7 @@ py -m venv .venv
 .\.venv\Scripts\python.exe worker.py
 ```
 
-What worker does:
+Worker flow:
 - polls `communications` with `status: pending`
 - claims doc as `processing`
 - resolves `tos/ccs/bccs` from `users`
@@ -245,7 +244,7 @@ Manual flow:
 3. Create one communication in `Notifications -> Communications`.
 4. Save.
 
-Expected:
+Check:
 - quick save (no blocking send in MZinga)
 - status `pending` then `sent`
 - mail visible in MailHog inbox
@@ -265,7 +264,7 @@ COMMUNICATIONS_EXTERNAL_WORKER=false
 2. Restart MZinga (`npm run dev`).
 3. Create a communication.
 
-Expected:
+Check:
 - old in-process path is active
 - `MailUtils:message` and `MailUtils:result` appear in MZinga logs
 
@@ -277,7 +276,7 @@ docker rm -f lab1-mailhog
 
 Create a communication while worker is running.
 
-Expected:
+Check:
 - status becomes `failed`
 
 Start MailHog again:
@@ -299,7 +298,7 @@ db.communications.updateOne(
 )
 ```
 
-Expected:
+Check:
 - worker picks it up and final status is `sent`
 
 ## Stop Everything

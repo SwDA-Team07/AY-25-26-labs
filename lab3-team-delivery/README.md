@@ -1,9 +1,9 @@
 # Lab 3 Report
 
-This report documents the Lab 3 team delivery work. The implementation starts
-from the Lab 2 REST email worker and adds structured logs, traces, and metrics.
+Team Lab 3 delivery notes. The worker starts from the Lab 2 REST version and
+adds structured logs, traces, and metrics.
 
-## Objective
+## Goal
 
 Instrument the Python email worker with the three observability pillars required
 by Lab 3:
@@ -82,7 +82,7 @@ lab3-team-delivery/lab3-worker-observable/
 ```
 
 The worker uses `structlog` JSON output instead of plain text logging.
-Implemented behavior:
+Log fields:
 
 - stable JSON events such as `worker_started`, `authenticated`,
   `starting_processing`, `communication_sent`, and `processing_failed`;
@@ -162,7 +162,7 @@ metrics endpoint on `http://localhost:8000/metrics`.
 Worker logs were verified to be JSON and correlated with both document and trace
 context.
 
-Observed evidence:
+Checked:
 
 - log entries include `doc_id` for the same Communication;
 - log entries emitted inside spans include `trace_id` and `span_id`;
@@ -182,7 +182,7 @@ Evidence:
 
 - `lab3-team-delivery/logs/step7-team-baseline-check.log`
 
-Observed:
+Checked:
 
 - `email-worker` service appears in Jaeger;
 - root span `process_communication` is present;
@@ -193,7 +193,7 @@ Observed:
 - MZinga server spans are linked under the worker HTTP client spans;
 - worker log `trace_id` matches the Jaeger trace.
 
-Status: Step 7 is verified.
+Step 7 check: OK.
 
 ## Step 8 - Verify Metrics in Prometheus
 
@@ -201,7 +201,7 @@ Evidence:
 
 - `lab3-team-delivery/logs/step8-team-metrics-check.log`
 
-Observed at `http://localhost:8000/metrics`:
+Checked at `http://localhost:8000/metrics`:
 
 - `emails_processed_total` with `status` and `recipient_count` labels;
 - `email_processing_duration_seconds_bucket`;
@@ -209,7 +209,7 @@ Observed at `http://localhost:8000/metrics`:
 - `worker_poll_total` with `result` label;
 - counters increment after success, failure, and recovery runs.
 
-Status: Step 8 is verified.
+Step 8 check: OK.
 
 ## Step 9 - Simulate and Diagnose a Failure
 
@@ -233,9 +233,9 @@ Recovery path verified:
 - the recovery trace is successful;
 - `emails_processed_total{status="sent"}` increments again.
 
-Status: Step 9 is verified.
+Step 9 check: OK.
 
-## Final Status
+## Checklist
 
 Lab 3 delivery status:
 
