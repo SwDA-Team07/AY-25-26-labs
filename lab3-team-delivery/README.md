@@ -1,8 +1,7 @@
 # Lab 3 Report
 
 This report documents the Lab 3 team delivery work. The implementation starts
-from the Lab 2 REST email worker and adds the observability requirements from
-`docs/08-lab3-step-by-step.md`.
+from the Lab 2 REST email worker and adds structured logs, traces, and metrics.
 
 ## Objective
 
@@ -115,7 +114,7 @@ The worker initializes OpenTelemetry tracing at startup:
   calls;
 - manual spans wrap `process_communication`, `serialize_body`, and `send_email`.
 
-Span attributes implemented from the guide:
+Span attributes:
 
 - `process_communication.doc_id`;
 - `serialize_body.node_count`;
@@ -147,8 +146,7 @@ curl -s http://localhost:8000/metrics | grep -E \
 
 ## Step 5 - Configure the Environment
 
-The worker `.env` contains the Lab 3 observability variables required by the
-professor guide:
+The worker `.env` contains the Lab 3 observability variables:
 
 ```text
 OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318/v1/traces
@@ -239,7 +237,7 @@ Status: Step 9 is verified.
 
 ## Final Status
 
-Lab 3 team delivery covers all required steps from the professor guide:
+Lab 3 delivery status:
 
 - Step 1: MZinga baseline metrics and traces checked;
 - Step 2: structured JSON logs added;

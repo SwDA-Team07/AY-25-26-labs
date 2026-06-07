@@ -1,6 +1,6 @@
 # Lab 2 - REST API Worker and Event-Driven Worker
 
-This folder documents the team Lab 2 delivery on branch `main`.
+This folder documents the team Lab 2 delivery.
 
 ## Part A - State 2 REST API Worker
 
@@ -140,7 +140,7 @@ reading Communications and writing status transitions.
 - Sefa: Step B3 RabbitMQ event inspection.
 - Sefa: Step B4 initial event-driven worker implementation.
 - Sefa: original State 3 verification artifacts.
-- Filippo: worker ACK/requeue policy refinement and regenerated verification
+- Filippo: worker ACK/requeue policy refinement and updated verification
   logs.
 
 ### Step B1 - WebHooks and Message Bus Analysis

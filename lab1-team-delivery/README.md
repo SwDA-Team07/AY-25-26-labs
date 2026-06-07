@@ -1,6 +1,7 @@
 # Lab 1 Delivery - Team 07
 
-This file mirrors the sections of `docs/06-lab1-step-by-step.md` and includes the exact commands we used to execute the Lab 1 activity as a group delivery.
+This file documents the Lab 1 group delivery and the commands used for the
+local verification run.
 
 ## Step 1 - Setup
 
@@ -29,7 +30,8 @@ COMMUNICATIONS_EXTERNAL_WORKER=true
 ```
 
 ### 1.4 Start infrastructure
-We used the simplified compose file (fallback from the guide) because of the replica-set security key issue on Windows.
+The simplified compose file was used to avoid the replica-set security key issue
+observed on Windows.
 
 ```powershell
 docker compose -f "%USERPROFILE%\IdeaProjects\AY-25-26-labs\docs\docker-compose-simplified.yml" --env-file "%USERPROFILE%\IdeaProjects\mzinga-apps\.env" -p mzinga-lab1 up -d database messagebus cache

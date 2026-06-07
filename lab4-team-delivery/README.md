@@ -1,6 +1,6 @@
 # Lab 4 Report - Baseline, Rolling, Recreate, Blue-Green
 
-This report documents the team Lab 4 work currently integrated on `main`.
+This report documents the team Lab 4 work.
 
 ## Objective
 
@@ -18,7 +18,7 @@ This baseline establishes:
 
 ## Scope
 
-Covered steps from `docs/09-lab4-step-by-step.md`:
+Covered scope:
 
 - Prerequisites
 - The Demo Service
@@ -54,7 +54,6 @@ Verification:
 ```sh
 $ minikube version
 minikube version: v1.38.1
-commit: c93a4cb9311efc66b90d33ea03f75f2c4120e9b0
 
 $ docker --version
 Docker version 29.4.1, build 055a478
@@ -255,8 +254,8 @@ running and ready. The Pod list confirms that the initial Deployment created
 three healthy replicas of the v1 service. The Service output confirms that
 `webapp` is exposed as a `ClusterIP` service on port `80`.
 
-The `curl /` response proves that traffic reaches a Kubernetes Pod through the
+The `curl /` response confirms that traffic reaches a Kubernetes Pod through the
 Service and that the application is running the expected baseline version:
-`1.0.0` / `blue`. The `curl /health` response proves that the health endpoint
+`1.0.0` / `blue`. The `curl /health` response confirms that the health endpoint
 used by the readiness and liveness probes is available and returns a successful
 JSON response.
