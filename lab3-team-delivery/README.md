@@ -134,6 +134,109 @@ Together, these lines verify the expected Step 2 behavior: the worker no longer
 emits free-form text logs, and each processing event is represented as a
 queryable JSON object with stable fields.
 
+
+## Team Task Check (Step 5-6) on Team Baseline
+
+### Objective
+
+The goal of these steps is to establish the existing observability baseline in
+MZinga and Jaeger UI, which is if both uses JSON format and showing traces in the same format.
+
+### Baseline used:
+
+- Lab3 base content from commit `6d1fef7` (`lab3: complete observability steps 1 and 2`)
+- Lab3 base content `worker.py` and `.env` from `lab3: complete observability fix, step 4`
+
+Lab 3 Step 1 and Step 2 for to see if the logs are in JSON format, Step 4 to add Jaeger Service and prometheus. 
+- Must use important dependencies in `.env` file, which are:
+  - `OTEL_EXPORTER_OTLP_ENDPOINT`: the Jaeger OTLP endpoint.
+  - `OTEL_SERVICE_NAME`: the service name as it will appear in Jaeger.
+  - `PROMETHEUS_PORT`: the port for the /metrics endpoint.
+- Must show `Communications` changes in JSON.
+- The `traceid` from output can be seen in jaeger, either by searching its id
+or observing in the main page ( http://localhost:16686/search ).
+
+In the Jaeger UI, Jaeger UI must:
+- `trace_id` or `doc_id` of the output must match the trace visible in Jaeger and need to be in JSON format.
+
+### Changes in .env part: 
+```
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+OTEL_SERVICE_NAME=email-worker
+PROMETHEUS_PORT=8000
+```
+
+#### Important Note:
+
+- It is important to note here that, in the `worker.py` has the functions beforehand, so there is no need to add any code to the `worker.py`.
+
+### Step 5 - Testing and Collecting Evidence
+
+- 1. Running `worker.py` with the changes in `.env`:
+Starting the process to see if the system can be reachable, can be connected with possible admin login.
+- 2. Using MZinga webpage to create a new communication:
+After the worker is online an working, using the mzinga webpage, create a new communication document.
+- 3. Checking `worker.py` results for the output:
+We are looking for output to be shown in JSON format, if it's shown in JSON, this test is a success
+
+### Results of Step 5:
+
+- Single line code in readable form:
+```code
+{
+  "service": "email-worker",
+  "event": "email_delivery_completed",
+  "doc_id": "6a0f99ff29f2803fe4392894",
+  "level": "info",
+  "timestamp": "2026-05-21T23:49:22.996115Z",
+  "trace_id": "c1f758e272feffda77bc4cd34fe11b07",
+  "span_id": "4c5fc795facf5303"
+}
+```
+- `trace_id` extracted from the code:
+```code
+"trace_id": "c1f758e272feffda77bc4cd34fe11b07"
+```
+- `doc_id` extracted from the code:
+```code
+"doc_id": "6a0f99ff29f2803fe4392894"
+```
+
+### Step 6 - Checking Jaeger for Observability.
+
+- After extracting "trace.id", we can lookup to changes happened by `worker.py` in Jaeger observability tool .
+- In the Jaeger (localhost:16686 in this test environment), in "search tab", choosing service and operation, 
+then pressing `find traces`, we can see timetable and traces. In the top left, there is a `Search by trace.id` bar.
+- Entering `trace.id` we extracted to here, The Jaeger simply opens the specific trace in a new page.
+- In the new page, extending the operation tables shows us every data they have on them. Crosschecking `doc.id` to see 
+if we are on the right page.
+- After crosschecking, we can see that In Jaeger, data can be seen in JSON, which is proof that this test is successful.
+
+### Results of Step 6:
+
+- The worker environment was configured with the required OpenTelemetry and Prometheus variables through the .env file, allowing integration with Jaeger and observability tooling.
+- After starting the worker and creating new Communication documents through the MZinga admin UI, the worker successfully processed communications and produced structured JSON log output instead of plain-text logs. The logs included important observability fields such as: `doc_id` and `trace_id`.
+
+The generated `trace_id`values were successfully matched with traces visible in Jaeger, confirming that distributed tracing and log correlation were functioning correctly. 
+
+## Evidence To Add
+
+For proof of observation and changes the screenshots named below can be checked for proof.
+
+```text
+lab3-team-delivery/screenshots/step5_6_worker_output_pure.png
+lab3-team-delivery/screenshots/step5_6_worker_output_readable.png
+lab3-team-delivery/screenshots/step5_6_jaeger_proof_closelook.png
+lab3-team-delivery/screenshots/step5_6_jaeger_proof_JSON.png
+```
+
+## Evidence Interpretation
+
+- `step5_6_worker_output_pure.png` is a direct screenshot of the aftermath of process. `step5_6_worker_output_readable.png` is a fixed verison of the output.
+- Within the worker output, output can be seen as JSON format.
+- `lab3-team-delivery/screenshots/step5_6_jaeger_proof_closelook.png` is a screenshot from Jaeger to show results of the process. Also in this photo, in the top left the process is searched with `doc_id`.
+- `lab3-team-delivery/screenshots/step5_6_jaeger_proof_JSON.png` is a screenshot of the Jaeger with process details on the screen. It has `trace_id` observable in the JSON form.
+
 ## Team Task Check (Step 7-8-9) on Team Baseline
 
 Check date: **2026-05-21**
