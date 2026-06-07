@@ -30,7 +30,7 @@ from prometheus_client import start_http_server
 load_dotenv(Path(__file__).with_name(".env"))
 
 # 1. Configurazione OpenTelemetry (Tracing)
-SERVICE_NAME = "email-worker"
+SERVICE_NAME = os.getenv("OTEL_SERVICE_NAME", "email-worker")
 resource = Resource.create({
     "service.name": SERVICE_NAME,
     "service.version": "1.0.0"
