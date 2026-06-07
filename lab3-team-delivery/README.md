@@ -173,7 +173,11 @@ Observed:
 
 Status:
 
-- Step 8 is **blocked** until Step 4 metrics implementation is merged in team branch.
+- Step 8 was **blocked** until Step 4 metrics implementation was merged in the
+  team branch. **It is now unblocked** by the Step 4 metrics work documented
+  below: the worker exposes `/metrics` on `PROMETHEUS_PORT` (8000) and defines the
+  four required instruments. Re-run the Step 8 verification on the updated
+  baseline to finalise shared evidence.
 
 ### Step 9 (Failure + Recovery) - Verified with Step 8 Limitation
 
@@ -191,4 +195,58 @@ Observed:
 Status:
 
 - Step 9 log/trace/status behavior is verified.
-- Step 9 metrics part remains blocked by the Step 8 blocker above.
+- Step 9 metrics part is unblocked together with Step 8 (see Step 4 below).
+
+## Step 4 - Custom Prometheus Metrics
+
+This step adds the third observability pillar to the worker and is what unblocks
+Steps 8 and 9 (metrics side). It builds on the existing OpenTelemetry tracing,
+reusing the same `Resource` and `service.name` (`email-worker`).
+
+Implemented changes in `lab3-team-delivery/lab3-worker-observable/`:
+
+- `requirements.txt` - added `opentelemetry-exporter-prometheus==0.45b0` and
+  `prometheus-client==0.20.0` (both compatible with the pinned
+  `opentelemetry-sdk==1.24.0`).
+- `worker.py` - initialised the metrics SDK at startup alongside the tracer
+  provider: `start_http_server(PROMETHEUS_PORT)` exposes the scrape endpoint, a
+  `PrometheusMetricReader` is registered on a `MeterProvider` that reuses the
+  tracing `Resource`, and a single `meter = get_meter("email-worker")` is obtained.
+- `worker.py` - defined four instruments and recorded measurements at the right
+  points in the existing flow:
+
+  | Instrument | Type | Where recorded | Labels |
+  |---|---|---|---|
+  | `emails_processed_total` | Counter | end of `process_communication` | `status` (`sent`/`failed`), `recipient_count` |
+  | `email_processing_duration_seconds` | Histogram | end-to-end span time in `process_communication` | - |
+  | `smtp_send_duration_seconds` | Histogram | around `smtp.sendmail` in `send_email` | - |
+  | `worker_poll_total` | Counter | each poll cycle in `main()` | `result` (`found`/`empty`) |
+
+  The `status="failed"` increment is emitted in the `except` block of
+  `process_communication`, next to the span ERROR status, so a failure surfaces
+  consistently across trace, log, and metric.
+- `.env` - added `PROMETHEUS_PORT=8000` and documented
+  `OTEL_EXPORTER_OTLP_ENDPOINT`.
+
+### Verification
+
+Static check:
+
+```sh
+python3 -m py_compile lab3-team-delivery/lab3-worker-observable/worker.py
+```
+
+Runtime check (with the lab stack running):
+
+```sh
+pip install -r lab3-team-delivery/lab3-worker-observable/requirements.txt
+python lab3-team-delivery/lab3-worker-observable/worker.py
+curl -s http://localhost:8000/metrics | grep -E \
+  'emails_processed_total|email_processing_duration_seconds_bucket|smtp_send_duration_seconds_bucket|worker_poll_total'
+```
+
+Create a Communication in the MZinga admin UI and refresh the metrics endpoint:
+the counters increment and the histogram buckets accumulate. Stopping MailHog and
+sending again increments `emails_processed_total{status="failed"}`. With this in
+place, the Step 8 blocker (`curl :8000/metrics` connection refused) is resolved
+and the Step 9 metrics path can be finalised.

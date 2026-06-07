@@ -19,6 +19,12 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
 from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
+# OpenTelemetry Metrics (Step 4: custom Prometheus metrics)
+from opentelemetry import metrics
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
+from prometheus_client import start_http_server
+
 # 1. Configurazione OpenTelemetry (Tracing)
 SERVICE_NAME = "email-worker"
 resource = Resource.create({
@@ -35,6 +41,40 @@ trace.set_tracer_provider(provider)
 
 RequestsInstrumentor().instrument()
 tracer = trace.get_tracer(SERVICE_NAME)
+
+# 2. Configurazione OpenTelemetry (Metrics)
+# Espone un endpoint /metrics che Prometheus può raschiare (scrape).
+try:
+    PROMETHEUS_PORT = int(os.getenv("PROMETHEUS_PORT", "8000"))
+except (TypeError, ValueError):
+    PROMETHEUS_PORT = 8000
+
+start_http_server(port=PROMETHEUS_PORT)
+metric_reader = PrometheusMetricReader()
+meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
+metrics.set_meter_provider(meter_provider)
+meter = metrics.get_meter(SERVICE_NAME)
+
+# NOTE: no `unit` is set on these instruments. The Prometheus exporter appends the
+# OTel unit to the exported series name (e.g. unit="s" -> *_seconds_s_bucket,
+# unit="1" -> emails_processed_1_total), which would break the expected metric
+# names. The unit is already encoded in the names themselves (_seconds).
+emails_processed = meter.create_counter(
+    name="emails_processed_total",
+    description="Total number of communications processed",
+)
+processing_duration = meter.create_histogram(
+    name="email_processing_duration_seconds",
+    description="End-to-end duration of processing one communication",
+)
+smtp_duration = meter.create_histogram(
+    name="smtp_send_duration_seconds",
+    description="Duration of the SMTP send call",
+)
+poll_counter = meter.create_counter(
+    name="worker_poll_total",
+    description="Number of poll cycles",
+)
 
 def configure_logging() -> None:
     structlog.configure(
@@ -151,8 +191,10 @@ def send_email(smtp_host, smtp_port, from_email, subject, to_emails, cc_emails, 
             if cc_emails: message["Cc"] = ", ".join(cc_emails)
             message.attach(MIMEText(html_body, "html", "utf-8"))
 
+            smtp_start = time.perf_counter()
             with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as smtp:
                 smtp.sendmail(from_email, all_recipients, message.as_string())
+            smtp_duration.record(time.perf_counter() - smtp_start)
         except Exception as e:
             span.set_status(trace.Status(trace.StatusCode.ERROR))
             span.record_exception(e)
@@ -204,7 +246,8 @@ def process_communication(document: dict, config: dict) -> None:
         doc_id = str(document.get("id"))
         span.set_attribute("doc_id", doc_id)
         log.info("starting_processing")
-        
+        start_time = time.perf_counter()
+
         try:
             subject = str(document.get("subject") or "")
             body_html = serialize_nodes(document.get("body") or [])
@@ -212,13 +255,16 @@ def process_communication(document: dict, config: dict) -> None:
             if not tos: raise ValueError("No recipients found")
 
             send_email(config["smtp_host"], config["smtp_port"], config["email_from"],
-                       subject, tos, extract_emails(document.get("ccs")), 
+                       subject, tos, extract_emails(document.get("ccs")),
                        extract_emails(document.get("bccs")), body_html)
-            
+
+            processing_duration.record(time.perf_counter() - start_time)
+            emails_processed.add(1, {"status": "sent", "recipient_count": len(tos)})
             log.info("email_delivery_completed")
         except Exception as e:
             span.set_status(trace.Status(trace.StatusCode.ERROR))
             span.record_exception(e)
+            emails_processed.add(1, {"status": "failed", "recipient_count": 0})
             log.error("processing_failed", error=str(e))
             raise e
 
@@ -237,11 +283,13 @@ def main():
     }
 
     api = MzingaApiClient(config["api_base_url"], config["admin_email"], config["admin_password"])
-    log.info("worker_started", poll_interval=config["poll_interval"])
+    log.info("worker_started", poll_interval=config["poll_interval"], prometheus_port=PROMETHEUS_PORT)
 
     while True:
         try:
-            for doc in api.get_pending_communications():
+            pending = api.get_pending_communications()
+            poll_counter.add(1, {"result": "found" if pending else "empty"})
+            for doc in pending:
                 comm_id = doc.get("id")
                 structlog.contextvars.bind_contextvars(doc_id=comm_id)
                 try:
