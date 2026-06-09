@@ -26,6 +26,8 @@ Covered:
 - Step 3 - In-Place Rolling Upgrade
 - Step 4 - Recreate (Replace) Strategy
 - Step 5 - Blue-Green Deployment
+- Step 6 - Canary Release
+- Step 7 - Pros and Cons, Comparison and Decision Framework
 
 ## Files
 
@@ -363,7 +365,7 @@ Handling connection for 8080
     0 2.0.0
 ```
 
-## Step 7 — Strategy Comparison and Decision Framework
+## Step 7 — Pros and Cons, Comparison and Decision Framework
 
 ### 7.1 - Rolling Update Pros and Cons
 
